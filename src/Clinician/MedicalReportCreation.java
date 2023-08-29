@@ -66,6 +66,7 @@ public class MedicalReportCreation extends JFrame {
         
         textField = new JTextField();
 		textField.setBounds(35, 172, 143, 32);
+		textField.setEnabled(false);
 		panel.add(textField);
 		textField.setColumns(10);
 		
@@ -241,6 +242,7 @@ public class MedicalReportCreation extends JFrame {
         
         JTextField textField2 = new JTextField();
 		textField2.setBounds(35, 1080, 143, 32);
+		textField2.setEnabled(false);
 		panel.add(textField2);
 		textField.setColumns(10);
         
@@ -268,6 +270,7 @@ public class MedicalReportCreation extends JFrame {
 
         JTextField txtName = new JTextField();
         txtName.setBounds(190, 1200, 143, 32);
+        txtName.setEnabled(false);
         panel.add(txtName);
 
         // Designation
@@ -278,6 +281,7 @@ public class MedicalReportCreation extends JFrame {
 
         JTextField txtDesignation = new JTextField();
         txtDesignation.setBounds(190, 1250, 143, 32);
+        txtDesignation.setEnabled(false);
         panel.add(txtDesignation);
 
         // Department
@@ -288,6 +292,7 @@ public class MedicalReportCreation extends JFrame {
 
         JTextField txtDepartment = new JTextField();
         txtDepartment.setBounds(190, 1300, 143, 32);
+        txtDepartment.setEnabled(false);
         panel.add(txtDepartment);
 
         // Datetime of Preparation
@@ -298,6 +303,7 @@ public class MedicalReportCreation extends JFrame {
 
         JTextField txtDatetime = new JTextField();
         txtDatetime.setBounds(230, 1350, 143, 32);
+        txtDatetime.setEnabled(false);
         panel.add(txtDatetime);
 
         // Signature
@@ -308,6 +314,7 @@ public class MedicalReportCreation extends JFrame {
 
         JTextField txtSignature = new JTextField();
         txtSignature.setBounds(190, 1400, 143, 32);
+        txtSignature.setEnabled(false);
         panel.add(txtSignature);
         
         JButton btnSign = new JButton("Sign");

@@ -81,6 +81,7 @@ public class AdmissionManagement extends JFrame {
         
         JTextField datetimeField = new JTextField();
         datetimeField.setBounds(200, 100, 150, 25);
+        datetimeField.setEnabled(false);
         admissionPanel.add(datetimeField);
 
         JLabel reasonLabel = new JLabel("Reason for Admission:");
@@ -118,6 +119,7 @@ public class AdmissionManagement extends JFrame {
 
 	    JTextField datetimeDischargeField = new JTextField();
 	    datetimeDischargeField.setBounds(250, 100, 150, 25);
+	    datetimeDischargeField.setEnabled(false);
 	    dischargePanel.add(datetimeDischargeField);
 
 	    // Label and Dropdown for 'Status at Discharge'
