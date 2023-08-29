@@ -4,7 +4,8 @@ import java.security.MessageDigest;
 import java.util.Base64;
 import org.apache.commons.codec.binary.Hex;
 
-public class Hasher {
+public class Hasher{
+
 	/* -hash(String, String) : String */
 	private static String hash(String input)
 	{
