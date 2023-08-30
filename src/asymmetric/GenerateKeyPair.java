@@ -8,12 +8,13 @@ import java.util.concurrent.TimeUnit;
 public class GenerateKeyPair {
 	public static void main(String[] args) throws Exception{
 		
+		AsymmetricKeyPair asymmetricKeyPair = new AsymmetricKeyPair();
 		// =============================================
 		// create key pair
-		AsymmetricKeyPair.createKeyPair();
+		asymmetricKeyPair.createKeyPair();
 		
-		byte[] publicKey = AsymmetricKeyPair.getPublickey().getEncoded();
-		byte[] privateKey = AsymmetricKeyPair.getPrivatekey().getEncoded();
+		byte[] publicKey = asymmetricKeyPair.getPublickey().getEncoded();
+		byte[] privateKey = asymmetricKeyPair.getPrivatekey().getEncoded();
 		
 		AsymmetricKeyPair.makeDirectory(publicKey, "KeyManagement/OriWei/AsymmetricKeyPair/PublicKey");
 		AsymmetricKeyPair.makeDirectory(privateKey, "KeyManagement/OriWei/AsymmetricKeyPair/PrivateKey");

@@ -8,6 +8,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 
 public class AsymmetricKeyPair {
 	
@@ -15,27 +16,28 @@ public class AsymmetricKeyPair {
 	
 	private KeyPairGenerator keygen;
 	private KeyPair keypair;
-	private static PublicKey publickey;
-	private static PrivateKey privatekey;
+	private PublicKey publickey;
+	private PrivateKey privatekey;
 	
-	public static PublicKey getPublickey() {
+	public PublicKey getPublickey() {
 		return publickey;
 	}
 	
-	public static PrivateKey getPrivatekey() {
+	public PrivateKey getPrivatekey() {
 		return privatekey;
 	}
 
 	public AsymmetricKeyPair() {
 		try {
-			keygen = KeyPairGenerator.getInstance(ALGORITHM);
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
-		}
+	        keygen = KeyPairGenerator.getInstance(ALGORITHM);
+	        SecureRandom random = new SecureRandom(); // Initialize a secure random number generator
+	        keygen.initialize(2048, random); // Initialize the key generator with the bit-size and the random number generator
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
 	}
 	
-	public static void createKeyPair() {
+	public void createKeyPair() {
 		AsymmetricKeyPair keyMaker = new AsymmetricKeyPair();
 		
 		//generate key pair
