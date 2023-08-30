@@ -7,7 +7,19 @@ import javax.swing.JPanel;
 import javax.swing.JLabel;
 import java.awt.Font;
 import javax.swing.JTextField;
+
+import SymmetricEncryption.Decrypter;
+import SymmetricEncryption.Encrypter;
+import SymmetricEncryption.Symmetric;
+
 import javax.swing.JButton;
+import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.awt.event.ActionEvent;
 
 public class PatientCreation {
 
@@ -44,6 +56,8 @@ public class PatientCreation {
 	 */
 	public PatientCreation() {
 		initialize();
+		int rowCount;
+		
 	}
 
 	/**
@@ -104,6 +118,76 @@ public class PatientCreation {
 		panel.add(tfPhoneNumber);
 		
 		JButton btnSubmit = new JButton("Submit");
+		btnSubmit.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				int rowCount;
+				int affectedRows;
+				String ICNo;
+				String name;
+				String phoneNumber;
+				String email;
+				String address;
+				String DoB;
+				String sex;
+				String emergencyContactPerson;
+				String relationship;
+				String emergencyPhoneNumber;
+				ICNo = tfICNo.getText();
+				name = tfName.getText();
+				phoneNumber = tfPhoneNumber.getText();
+				email = tfEmail.getText();
+				address = tfAddress.getText();
+				DoB = tfDoB.getText();
+				sex = tfSex.getText();
+				emergencyContactPerson = tfEmergencyContactPerson.getText();
+				relationship = tfRelationship.getText();
+				emergencyPhoneNumber = tfEmergencyPhoneNumber.getText();
+				//encrypt it!
+				Encrypter encypt = new Encrypter();
+				String encryptedICNo = encypt.encrypter(ICNo);
+				System.out.println("Encrypted: " + encryptedICNo);
+				
+				//decrypt it!
+				Decrypter decypt = new Decrypter();
+				String originalData = decypt.decrypter(encryptedICNo);
+				System.out.println("Original Content: " + originalData);
+				
+				try {
+					Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
+		            Statement stmt = conn.createStatement();
+		            ResultSet rs = stmt.executeQuery("SELECT * from BCD.patient where IC_No = '" + ICNo + "'");
+		            rowCount = 0;
+					while (rs.next()) 
+					{
+		               rowCount++;
+					}
+					if(rowCount==0)
+					{
+						System.out.println("Proceed to insert new patient record.");
+						Statement stmt2 = conn.createStatement();
+						 affectedRows = stmt2.executeUpdate("INSERT INTO BCD.patient (IC_No, name, phoneNumber, emailAddress, address, DOB, sex, "
+						 		+ "emergencyContactPerson, relationship, emergencyPhoneNumber)  "
+		                    		+ "VALUES ('" + encryptedICNo + "','" + name + "','" + phoneNumber + "','" + email + "', '" + address + "','" + DoB + "','" + 
+						 		sex + "','" + emergencyContactPerson + "','" + relationship + "','" + emergencyPhoneNumber + "')");
+		                    System.out.println("Affected rows: " + affectedRows);
+		                    if(affectedRows==1)
+		                    {
+		                    	System.out.println("New patient record created.");
+		                    }
+		                    else
+		                    {
+		                    	System.out.println("Error.");
+		                    }
+					}
+		            else
+		            {
+		        	   System.out.println("Patient record exist. Abort.");  
+		            }	
+				} catch (SQLException ex) {
+		           ex.printStackTrace();
+				}
+			}
+		});
 		btnSubmit.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		btnSubmit.setBounds(272, 608, 105, 33);
 		panel.add(btnSubmit);
