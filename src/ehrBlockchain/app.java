@@ -16,8 +16,9 @@ public class app {
 			/* create genesis block */
 			EHRchain.genesis();
 			EHRchain.distribute();
-		} else {
 			
+		} else {
+			// dummy record
 			String tranx1 = "alice|bob|debit|rm|10";
 			String tranx2 = "helen|bob|debit|rm|20";
 			String tranx3 = "helen|bob|debit|rm|30";
