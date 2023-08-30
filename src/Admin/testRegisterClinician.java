@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Base64;
 import java.util.List;
 import java.util.Scanner;
 
@@ -12,6 +13,7 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import DatabaseObject.Admin;
 import Tools.RandomPasswordGenerator;
+import asymmetric.AsymmetricKeyPair;
 
 import java.security.SecureRandom;
 
@@ -62,15 +64,15 @@ public class testRegisterClinician {
                 System.out.println("Hashed Password" + hashedPassword); 
                 //sql to count row and add username C0001
                 try (Statement stmt2 = conn.createStatement();
-                        ResultSet rs2 = stmt2.executeQuery("SELECT * from BCD.clinician where clinicianID = '" + clinicianID + "'")) {
+                        ResultSet rs2 = stmt2.executeQuery("SELECT * from BCD.clinician ")) {
                    	
                    	rowCount = 0;
                        while (rs2.next()) {
                            rowCount++;
                        }
-                       if(rowCount==0)
+                       if(rowCount>=0)
                        {
-                    	   rowCount=1;
+                    	   rowCount+=1;
                     	   System.out.println("Proceed");
                     	   String prefix = "C";
                            // Find the number of digits in row
@@ -103,6 +105,20 @@ public class testRegisterClinician {
                         System.out.println("Clinician ID inserted: " + clinicianID);
                         System.out.println("Username: " + username);
                         System.out.println("Password: " + password);
+                                              
+						// create key pair
+                        AsymmetricKeyPair asymmetricKeyPair = new AsymmetricKeyPair();
+                		asymmetricKeyPair.createKeyPair();
+                		byte[] publicKey = asymmetricKeyPair.getPublickey().getEncoded();
+                		byte[] privateKey = asymmetricKeyPair.getPrivatekey().getEncoded();
+                		
+                		AsymmetricKeyPair.makeDirectory(publicKey, "KeyManagement/" + username + "/AsymmetricKeyPair/PublicKey");
+                		AsymmetricKeyPair.makeDirectory(privateKey, "KeyManagement/" + username + "/AsymmetricKeyPair/PrivateKey");
+
+                		System.out.println("Generated Key Pair:");
+                		System.out.println("Public key:" + Base64.getEncoder().encodeToString(publicKey));
+                		System.out.println("Private key:" + Base64.getEncoder().encodeToString(privateKey));
+                		
                     }
                     else
                     {
