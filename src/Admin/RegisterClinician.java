@@ -17,6 +17,7 @@ public class RegisterClinician {
 	private JTextField tfDesignation;
 	private JTextField tfClinicianICNo;
 	private JTextField tfHospitalID;
+	private JTextField tfDepartment;
 
 	/**
 	 * Launch the application.
@@ -89,12 +90,12 @@ public class RegisterClinician {
 		
 		JLabel lbHospitalName = new JLabel("Hospital Name: ");
 		lbHospitalName.setFont(new Font("Tahoma", Font.PLAIN, 15));
-		lbHospitalName.setBounds(124, 258, 131, 34);
+		lbHospitalName.setBounds(124, 302, 131, 34);
 		panel.add(lbHospitalName);
 		
 		JButton btnSubmit = new JButton("Submit");
 		btnSubmit.setFont(new Font("Tahoma", Font.PLAIN, 15));
-		btnSubmit.setBounds(244, 368, 105, 33);
+		btnSubmit.setBounds(244, 412, 105, 33);
 		panel.add(btnSubmit);
 		
 		JLabel lbClinicianICNo = new JLabel("Clinician IC: ");
@@ -110,18 +111,29 @@ public class RegisterClinician {
 		
 		JLabel lbHospitalID = new JLabel("Hospital ID: ");
 		lbHospitalID.setFont(new Font("Tahoma", Font.PLAIN, 15));
-		lbHospitalID.setBounds(124, 302, 131, 34);
+		lbHospitalID.setBounds(124, 346, 131, 34);
 		panel.add(lbHospitalID);
 		
 		tfHospitalID = new JTextField();
 		tfHospitalID.setEditable(false);
 		tfHospitalID.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		tfHospitalID.setColumns(10);
-		tfHospitalID.setBounds(303, 302, 157, 34);
+		tfHospitalID.setBounds(303, 346, 157, 34);
 		panel.add(tfHospitalID);
 		
 		JComboBox cbHospitalName = new JComboBox();
-		cbHospitalName.setBounds(303, 258, 157, 30);
+		cbHospitalName.setBounds(303, 302, 157, 30);
 		panel.add(cbHospitalName);
+		
+		JLabel lbDepartment = new JLabel("Department: ");
+		lbDepartment.setFont(new Font("Tahoma", Font.PLAIN, 15));
+		lbDepartment.setBounds(124, 258, 131, 34);
+		panel.add(lbDepartment);
+		
+		tfDepartment = new JTextField();
+		tfDepartment.setFont(new Font("Tahoma", Font.PLAIN, 15));
+		tfDepartment.setColumns(10);
+		tfDepartment.setBounds(303, 258, 157, 34);
+		panel.add(tfDepartment);
 	}
 }
