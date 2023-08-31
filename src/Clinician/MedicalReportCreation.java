@@ -1,34 +1,52 @@
 package Clinician;
 
 import java.awt.EventQueue;
-
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+
+import DatabaseObject.Clinician;
+
 import java.awt.Dimension;
 import javax.swing.JLabel;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.List;
 import javax.swing.JTextField;
 import javax.swing.JTextArea;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import DigitalSignature.UserSignature;
+import asymmetric.*;
 
 
 public class MedicalReportCreation extends JFrame {
-
+	
+	public String username;
 	private JPanel contentPane;
 	private JTextField textField;
 
 	/**
 	 * Launch the application.
 	 */
-	public static void main(String[] args) {
+	public static void createAndShowGUI(String username) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					MedicalReportCreation frame = new MedicalReportCreation();
+					MedicalReportCreation frame = new MedicalReportCreation(username);
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -37,12 +55,51 @@ public class MedicalReportCreation extends JFrame {
 		});
 	}
 	
-	
 	/**
 	 * Create the frame.
 	 */
-	public MedicalReportCreation() {
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	public MedicalReportCreation(String username) {     
+        initialize();
+        this.username=username;
+        String CSID = null;
+		int rowCount;
+        try (Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
+	             Statement stmt = conn.createStatement();
+	             ResultSet rs = stmt.executeQuery("SELECT * from BCD.clinicalSummary")) {
+	        	
+			rowCount = 0;
+            while (rs.next()) {
+                rowCount++;
+            }
+            if(rowCount>=0)
+            {
+         	   rowCount+=1;
+         	   System.out.println("Proceed");
+         	   String prefix = "CS";
+                // Find the number of digits in row
+                int numberOfDigits = String.valueOf(rowCount).length();                        
+                // Determine the number of zeros to prepend
+                int numberOfZeros = 4 - numberOfDigits;  // Assuming 4-digit CSID
+                // Create zeros string
+                StringBuilder zeros = new StringBuilder();
+                for (int i = 0; i < numberOfZeros; i++) {
+                    zeros.append("0");
+                }
+                CSID = (prefix + zeros + rowCount);    
+                System.out.println(CSID);
+            }
+            else
+            {
+         	   System.out.println("Error");  
+            }
+		} catch (SQLException e) {
+            e.printStackTrace();
+        }
+		//tfCSID.setText(CSID);
+        
+    }
+	private void initialize() {
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 637, 640);
         contentPane = new JPanel();
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -305,20 +362,49 @@ public class MedicalReportCreation extends JFrame {
         txtDatetime.setBounds(230, 1350, 143, 32);
         txtDatetime.setEnabled(false);
         panel.add(txtDatetime);
-
+        
         // Signature
         JLabel lblSignature = new JLabel("Signature:");
         lblSignature.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblSignature.setBounds(35, 1400, 143, 19);
+        lblSignature.setBounds(35, 1400, 180, 19);
         panel.add(lblSignature);
 
         JTextField txtSignature = new JTextField();
-        txtSignature.setBounds(190, 1400, 143, 32);
+        txtSignature.setBounds(230, 1400, 143, 32);
         txtSignature.setEnabled(false);
         panel.add(txtSignature);
         
         JButton btnSign = new JButton("Sign");
         btnSign.setBounds(480, 1450, 143, 32);
+        btnSign.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+            	String name = null;
+            	String department = null;
+            	String designation = null;
+            	try {
+            		Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
+                    Statement stmt = conn.createStatement();
+                    ResultSet rs = stmt.executeQuery("SELECT * from BCD.clinician where username = '" + username + "'");
+                    name = rs.getString("name");
+                    designation = rs.getString("designation");
+                    department = rs.getString("department");
+            	} catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+    
+                List<String> userIdentity = Arrays.asList(name, designation, department);
+                PrivateKey privateKey = null; // define outside try-catch
+                try {
+                    privateKey = AccessKey.getPrivateKey("KeyManagement/" + username + "/AsymmetricKeyPair/PrivateKey");
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+                if (privateKey != null) {
+                	UserSignature userSignature = new UserSignature();
+                	byte[] signature = userSignature.getSignature(userIdentity, privateKey);
+                }
+            }
+        });
         panel.add(btnSign);
         
         // Set up the JScrollPane
@@ -331,6 +417,5 @@ public class MedicalReportCreation extends JFrame {
         int lastComponentHeight = btnSign.getBounds().height;
         int panelHeight = lastComponentY + lastComponentHeight + 30;
         panel.setPreferredSize(new Dimension(612, panelHeight));
-    
-    }
+	}
 }
