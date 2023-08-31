@@ -155,7 +155,7 @@ public class PatientCreation {
 				try {
 					Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
 		            Statement stmt = conn.createStatement();
-		            ResultSet rs = stmt.executeQuery("SELECT * from BCD.patient where IC_No = '" + ICNo + "'");
+		            ResultSet rs = stmt.executeQuery("SELECT * from BCD.patient where IC_No = '" + encryptedICNo + "'");
 		            rowCount = 0;
 					while (rs.next()) 
 					{
