@@ -4,8 +4,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
-import java.util.List;
-
 import Hashing.Hasher;
 
 public class UserSignature {
@@ -21,25 +19,19 @@ public class UserSignature {
 		}
 	}
 	
-	public byte[] getSignature(List<String> userIdentity, PrivateKey key) {
+	public byte[] getSignature(String clinicalSummaryRecord, PrivateKey key) {
 		
 		byte[] signature = null;
 		
 		try {
 			sig.initSign(key);
 			
-			// convert list into string
-			StringBuilder user = new StringBuilder();
-			for (String s: userIdentity) {
-				user.append(s);
-			}
-			
 			// convert hash to bytes
-			String userHash = Hasher.sha256(user.toString());
-			byte[] userIdentityBytes = userHash.getBytes();
+			String recordHash = Hasher.sha256(clinicalSummaryRecord);
+			byte[] recordBytes = recordHash.getBytes();
 			
 			// sign
-			sig.update(userIdentityBytes);
+			sig.update(recordBytes);
 			signature = sig.sign();
 			
 		}catch(Exception e) {
@@ -48,26 +40,20 @@ public class UserSignature {
 		return signature;
 	}
 	
-	public boolean VerifySignature(List<String> userIdentity, byte[] signature, PublicKey key) {
+	public boolean VerifySignature(String clinicalSummaryRecord, byte[] signature, PublicKey key) {
 		
 		boolean verification = false;
 		
 		try {
 			sig.initVerify(key);
 			
-			// convert list into string
-			StringBuilder user = new StringBuilder();
-			for (String s: userIdentity) {
-				user.append(s);
-			}
-			
 			// convert hash to bytes
-			String userHash = Hasher.sha256(user.toString());
-			byte[] userIdentityBytes = userHash.getBytes();
+			String recordHash = Hasher.sha256(clinicalSummaryRecord);
+			byte[] recordBytes = recordHash.getBytes();
 			
 			// sign
-			sig.update(userIdentityBytes);
-			verification = sig.verify(signature);
+			sig.update(recordBytes);
+			signature = sig.sign();
 			
 		}catch(Exception e) {
 			e.printStackTrace();
