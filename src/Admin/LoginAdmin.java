@@ -7,18 +7,32 @@ import javax.swing.JPanel;
 import javax.swing.JLabel;
 import java.awt.Font;
 import javax.swing.JTextField;
+
+import org.mindrot.jbcrypt.BCrypt;
+
+import DatabaseObject.Admin;
+
 import javax.swing.JButton;
+import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.awt.event.ActionEvent;
 
 public class LoginAdmin {
 
 	private JFrame frame;
-	private JTextField textField;
-	private JTextField textField_1;
+	private JTextField tfUsername;
+	private JTextField tfPassword;
 
 	/**
 	 * Launch the application.
 	 */
-	public static void main(String[] args) {
+	public static void createAndShowGUI() {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
@@ -36,6 +50,7 @@ public class LoginAdmin {
 	 */
 	public LoginAdmin() {
 		initialize();
+		
 	}
 
 	/**
@@ -72,19 +87,67 @@ public class LoginAdmin {
 		lbPassword.setBounds(76, 209, 85, 34);
 		panel.add(lbPassword);
 		
-		textField = new JTextField();
-		textField.setFont(new Font("Tahoma", Font.PLAIN, 15));
-		textField.setBounds(160, 151, 157, 34);
-		panel.add(textField);
-		textField.setColumns(10);
+		tfUsername = new JTextField();
+		tfUsername.setFont(new Font("Tahoma", Font.PLAIN, 15));
+		tfUsername.setBounds(160, 151, 157, 34);
+		panel.add(tfUsername);
+		tfUsername.setColumns(10);
 		
-		textField_1 = new JTextField();
-		textField_1.setFont(new Font("Tahoma", Font.PLAIN, 15));
-		textField_1.setColumns(10);
-		textField_1.setBounds(160, 209, 157, 34);
-		panel.add(textField_1);
+		tfPassword = new JTextField();
+		tfPassword.setFont(new Font("Tahoma", Font.PLAIN, 15));
+		tfPassword.setColumns(10);
+		tfPassword.setBounds(160, 209, 157, 34);
+		panel.add(tfPassword);
 		
 		JButton btnLogin = new JButton("Login");
+		btnLogin.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String username = tfUsername.getText();
+				String password = tfPassword.getText();
+				String adminID = null;
+				String cmpUsername;
+				String saltedHashPassword = null;
+				String salt = null;
+				
+				List<Admin> adminList = new ArrayList<>();
+				String sql = "SELECT * from BCD.admin where username = '" + username + "'";
+					
+		        try (Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
+		             Statement stmt = conn.createStatement();
+		             ResultSet rs = stmt.executeQuery("SELECT * from BCD.admin where username = '" + username + "'")) {
+		        	
+		            while (rs.next()) {
+		                Admin admin = new Admin(rs.getString("AdminID"), rs.getString("username"), rs.getString("password"), rs.getString("salt"));
+		                adminList.add(admin);
+		            }
+		        } catch (SQLException e1) {
+		            e1.printStackTrace();
+		        }
+		        try {
+		            for (Admin admin : adminList) {
+		            	adminID=admin.getAdminID();
+		            	cmpUsername = admin.getUsername();
+		            	saltedHashPassword=admin.getSaltedPassword();
+		            	salt=admin.getSalt();   
+		            }
+		        } catch (Exception ex) {
+		            ex.printStackTrace();
+		        }  
+		        //compare password	
+				System.out.println("salt is: " + salt);
+				boolean isValid = BCrypt.checkpw(password, saltedHashPassword);
+		  		if (isValid==true)
+		  		{
+		  			System.out.println("Valid");
+		  			System.out.println("Welcome admin: " + adminID);
+		  		}
+		  		else
+		  		{
+		  			System.out.println("Not Valid");
+		  			System.out.println("Password not found. Please try again.");
+		  		}
+			}
+		});
 		btnLogin.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		btnLogin.setBounds(170, 287, 105, 33);
 		panel.add(btnLogin);
