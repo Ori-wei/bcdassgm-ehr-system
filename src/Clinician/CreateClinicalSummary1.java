@@ -7,6 +7,9 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.swing.ButtonGroup;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -14,9 +17,17 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+
+import DatabaseObject.Hospital;
+import DatabaseObject.Patient;
+import SymmetricEncryption.Decrypter;
+
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.ActionEvent;
+import javax.swing.JComboBox;
 
 public class CreateClinicalSummary1 {
 	
@@ -24,9 +35,9 @@ public class CreateClinicalSummary1 {
 	public String patientName = null;
 	public String CSID = null;
 	private JFrame frame;
-	private JTextField txtPatientIC;
 	private JTextField txtPatient;
 	private JTextField txtReportID;
+	private JComboBox<Patient> cbPatientID;
 
 	/**
 	 * Launch the application.
@@ -50,6 +61,8 @@ public class CreateClinicalSummary1 {
 	public CreateClinicalSummary1(String username) {
 		initialize();
 		this.username = username;
+		String patientID;
+		String patientName;
 		
 		// Populate Patient Name
 		
@@ -90,6 +103,34 @@ public class CreateClinicalSummary1 {
             e.printStackTrace();
         }
         txtReportID.setText(CSID);
+        
+        //Populate PatientID dropdown
+        List<Patient> patientList = new ArrayList<>();
+        try {
+	    	Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+	        Statement stmt = conn.createStatement();
+	        ResultSet rs = stmt.executeQuery("SELECT * from BCD.patient");
+            while (rs.next()) {
+            	//decrypt it!
+				Decrypter decypt = new Decrypter();
+            	String decryptedIC = decypt.decrypter(rs.getString("IC_No"));
+            	System.out.println("Original Content: " + decryptedIC);
+            	Patient patient = new Patient(decryptedIC, rs.getString("name"));
+                patientList.add(patient);
+            }
+        } catch (SQLException e1) {
+            e1.printStackTrace();
+        }
+        try {
+            for (Patient patient : patientList) {
+            	patientID=patient.getPatientID();
+            	patientName = patient.getName();   
+            	cbPatientID.addItem(patient);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }  
+        
 	}
 
 	/**
@@ -122,12 +163,6 @@ public class CreateClinicalSummary1 {
         lblIC.setFont(new Font("Tahoma", Font.PLAIN, 15));
         lblIC.setBounds(33, 149, 101, 13);
 		panel.add(lblIC);
-		
-		txtPatientIC = new JTextField();
-		txtPatientIC.setBounds(35, 175, 143, 32);
-		txtPatientIC.setEnabled(false);
-		panel.add(txtPatientIC);
-		txtPatientIC.setColumns(10);
         
 		JLabel lblNewLabel_2 = new JLabel("Patient Name");
 		lblNewLabel_2.setFont(new Font("Tahoma", Font.PLAIN, 15));
@@ -256,6 +291,20 @@ public class CreateClinicalSummary1 {
 		});
 		btnNext.setBounds(509, 572, 85, 21);
 		panel.add(btnNext);
+		
+		cbPatientID = new JComboBox();
+		cbPatientID.setBounds(33, 175, 134, 32);
+		cbPatientID.addItemListener(new ItemListener() {
+		    @Override
+		    public void itemStateChanged(ItemEvent e) {
+		        if (e.getStateChange() == ItemEvent.SELECTED) {
+		            Patient selectedPatient = (Patient) e.getItem();
+		            String patientName = selectedPatient.getName();
+		            txtPatient.setText(patientName);
+		        }
+		    }
+		});
+		panel.add(cbPatientID);
 	}
 	
 	public void actionPerformed(ActionEvent evt) {
