@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.HashMap;
 
 import javax.swing.JTextField;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.JTable;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -121,24 +123,10 @@ public class DisplayPatientEHR {
 	            String id = components[0]; 
 	            System.out.println(id);
 	            String IC = components[1];
-	            String date = components[2]; 
+	            String date = components[12]; 
+	            String admissionID = components[11];
+	            String statusAtDischarge = components[16];
 	            System.out.println("Comparing patientIC: " + patientIC + " with IC: " + IC);
-//	            if (patientIC.equals(IC)) {
-//	            	for(String key : latestClinicalSummaries.keySet()) {
-//	            	    ClinicalSummary cscs = latestClinicalSummaries.get(key);
-//	            	    // do something
-//	            	    if (cscs.get(id).equals(id)) {
-//	                        System.out.println("Comparing CSID: " + CSID + " with id: " + id);
-//		                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd"); // Assuming the date format in your record
-//		                    Date recordDate = sdf.parse(date);
-//		                    ClinicalSummary existingSummary = latestClinicalSummaries.get(id);
-//		                    if (existingSummary == null || sdf.parse(existingSummary.getDate()).before(recordDate)) {
-//		                        ClinicalSummary clinicalSummary = new ClinicalSummary(id, date);
-//		                        latestClinicalSummaries.put(id, clinicalSummary);  
-//		                    }
-//		                }
-//	            	}  	   
-//	            }
 	            if (patientIC.equals(IC)) {
 	                ClinicalSummary existingSummary = latestClinicalSummaries.get(id);
 	                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -148,7 +136,7 @@ public class DisplayPatientEHR {
 	                if (existingSummary == null) {
 	                	//System.out.println("Comparing old date: " + sdf.parse(existingSummary.getDate() + " with new date: " + recordDate));
 	                	System.out.println(" with new date: " + recordDate);
-	                    ClinicalSummary clinicalSummary = new ClinicalSummary(id, date);
+	                    ClinicalSummary clinicalSummary = new ClinicalSummary(id, date, admissionID, statusAtDischarge);
 	                    latestClinicalSummaries.put(id, clinicalSummary);  
 	                    System.out.println(recordDate);
 	                }
@@ -158,7 +146,7 @@ public class DisplayPatientEHR {
 	                	{
 	                		//System.out.println("Comparing old date: " + sdf.parse(existingSummary.getDate() + " with new date: " + recordDate));
 		                	System.out.println(" with new date: " + recordDate);
-		                    ClinicalSummary clinicalSummary = new ClinicalSummary(id, date);
+		                    ClinicalSummary clinicalSummary = new ClinicalSummary(id, date, admissionID, statusAtDischarge);
 		                    latestClinicalSummaries.put(id, clinicalSummary);  
 		                    System.out.println(recordDate);
 	                	}
@@ -176,7 +164,7 @@ public class DisplayPatientEHR {
             }
         };
 
-        model.setColumnIdentifiers(new Object[]{"Index", "CSID", "Date"});
+        model.setColumnIdentifiers(new Object[]{"Index", "CSID", "AdmissionID", "Status at Discharge", "Date"});
         jtable1.setModel(model);
         model.setRowCount(0);
         int index = 0;
@@ -184,7 +172,7 @@ public class DisplayPatientEHR {
             for (ClinicalSummary clinicalSummary : clinicalSummaryList) {
             	//initialize things into clinicalSummary object
             	index++;
-                model.addRow(new Object[]{index, clinicalSummary.getCSID(), clinicalSummary.getDate()});     
+                model.addRow(new Object[]{index, clinicalSummary.getCSID(), clinicalSummary.getAdmissionID(), clinicalSummary.getStatusAtDischarge(), clinicalSummary.getDate()});     
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -251,14 +239,57 @@ public class DisplayPatientEHR {
 		tfSex.setBounds(547, 113, 51, 34);
 		panel.add(tfSex);
 		
-		jtable1 = new JTable();
-	    JScrollPane scrollPane = new JScrollPane(jtable1);
-	    scrollPane.setBounds(51, 200, 547, 157); // Changed y-position for demonstration
-	    panel.add(scrollPane);
-		
 		JButton btnNext = new JButton("Next >");
 		btnNext.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		btnNext.setBounds(497, 396, 101, 33);
 		panel.add(btnNext);
+		
+		JButton btnCreateDischarge = new JButton("Create Discharge");
+		btnCreateDischarge.setEnabled(false);
+		btnCreateDischarge.setFont(new Font("Tahoma", Font.PLAIN, 15));
+		btnCreateDischarge.setBounds(51, 396, 157, 33);
+		panel.add(btnCreateDischarge);
+		
+		jtable1 = new JTable();
+	    JScrollPane scrollPane = new JScrollPane(jtable1);
+	    scrollPane.setBounds(51, 200, 547, 157); // Changed y-position for demonstration
+	    panel.add(scrollPane);
+	    jtable1.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+	        public void valueChanged(ListSelectionEvent e) {
+	            if (!e.getValueIsAdjusting()) {
+	                int selectedRow = jtable1.getSelectedRow();
+	                if (selectedRow >= 0) {
+	                    // Extract values from selected row here. For example:
+	                    Object selectedCSID = jtable1.getValueAt(selectedRow, 1); // 1 for the 2nd column
+	                    Object selectedAdmissionID = jtable1.getValueAt(selectedRow, 2); // 2 for the 3rd column
+	                    Object selectedStatusAtDischarge = jtable1.getValueAt(selectedRow, 3); // 2 for the 3rd column
+	                    Object selectedDate = jtable1.getValueAt(selectedRow, 4); // 3 for the 4th column
+	                    
+	                    String CSID = (String) selectedCSID;
+	                    String admissionID = (String) selectedAdmissionID;
+	                    String statusAtDischarge = (String) selectedStatusAtDischarge;
+	                    String date = (String) selectedDate;
+	                    
+	                    // Now you can use these selected values
+	                    System.out.println("Selected CSID: " + selectedCSID);
+	                    System.out.println("Selected AdmissionID: " + selectedAdmissionID);
+	                    System.out.println("Selected Status at Discharge: " + selectedStatusAtDischarge);
+	                    System.out.println("Selected Date: " + selectedDate);
+	                    
+	                    // If you want to enable a button upon row selection:
+	                    if(!admissionID.equals("NA") && statusAtDischarge.equals("NA"))
+	                    {
+	                    	btnCreateDischarge.setEnabled(true);
+	                    }
+	                    if(admissionID.equals("NA") || !statusAtDischarge.equals("NA"))
+	                    {
+	                    	btnCreateDischarge.setEnabled(false);
+	                    }
+	                }
+	            }
+	        }
+	    });
+		
+		
 	}
 }
