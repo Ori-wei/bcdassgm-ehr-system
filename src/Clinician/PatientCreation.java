@@ -19,6 +19,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.awt.event.ActionEvent;
 
 public class PatientCreation {
@@ -38,7 +39,8 @@ public class PatientCreation {
 	/**
 	 * Launch the application.
 	 */
-	public static void main(String[] args) {
+	
+	public static void createAndShowGUI() {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {

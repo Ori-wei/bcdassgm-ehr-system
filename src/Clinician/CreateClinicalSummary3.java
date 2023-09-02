@@ -347,11 +347,13 @@ public class CreateClinicalSummary3 {
 	    	if (admissionID.isEmpty()) {
 	    		CSRecord = record.get(2) + "|" + record.get(0) + "|" + record.get(3) + "|" + record.get(4) +
 		        		"|" + record.get(5) + "|" + record.get(6) + "|" + record.get(7) + "|" + record.get(8) +
-		        		"|" + record.get(9) + "|" + record.get(10) + "|" + record.get(11) + "|" + "NA" + "|" + timestampNow;
+		        		"|" + record.get(9) + "|" + record.get(10) + "|" + record.get(11) + "|" + "NA" +
+		        		"|" + timestampNow + "|" + "NA" + "|" + "NA" + "|" + "NA";
 	    	}else {
 	    		CSRecord = record.get(2) + "|" + record.get(0) + "|" + record.get(3) + "|" + record.get(4) +
 		        		"|" + record.get(5) + "|" + record.get(6) + "|" + record.get(7) + "|" + record.get(8) +
-		        		"|" + record.get(9) + "|" + record.get(10) + "|" + record.get(11) + "|" + record.get(12) + "|" + timestampNow;
+		        		"|" + record.get(9) + "|" + record.get(10) + "|" + record.get(11) + "|" + record.get(12) +
+		        		"|" + timestampNow + "|" + "NA" + "|" + "NA" + "|" + "NA";
 	    	}
 	        
 	        System.out.println(CSRecord);
@@ -477,5 +479,8 @@ public class CreateClinicalSummary3 {
 		} catch (SQLException e2) {
 	        e2.printStackTrace();
 	    }
+		
+		// Back to Menu
+		Menu.createAndShowGUI(username);
 	}
 }
