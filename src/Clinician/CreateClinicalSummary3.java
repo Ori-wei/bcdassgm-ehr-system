@@ -4,40 +4,62 @@ import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.security.PrivateKey;
 import java.sql.Timestamp;
+import java.util.List;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import org.mindrot.jbcrypt.BCrypt;
 import DigitalSignature.UserSignature;
+import SymmetricEncryption.Decrypter;
 import asymmetric.AccessKey;
+import ehrBlockchain.Block;
+import ehrBlockchain.Blockchain;
+import ehrBlockchain.RecordCollection;
+
+import javax.swing.JRadioButton;
 
 public class CreateClinicalSummary3 {
 
 	private JFrame frame;
 	public String username;
-	public String patientName;
-	public String CSID;
+	public List<String> record;
+	private JTextField txtPatientIC;
 	private JTextField txtPatient;
 	private JTextField txtReportID;
-	private JTextField txtDTVisit;
-	private JTextField txtPatientIC;
+	private JTextField txtName;
+	private JTextField txtDesignation;
+	private JTextField txtDepartment;
+	private JTextField txtDatetime;
+	private JTextField txtSignature;
+	public Timestamp admissionTimestamp;
+	private String admissionID = "";
+	private JButton btnNext;
+	private String CSRecord = null;
+	private String hashRecord = null;
+	private String hospitalID = null;
+	private String clinicianID = null;
 
 	/**
 	 * Launch the application.
 	 */
-	public static void createAndShowGUI(String username, String patientName, String CSID) {
+	public static void createAndShowGUI(String username, List<String> record) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					CreateClinicalSummary3 window = new CreateClinicalSummary3(username, patientName, CSID);
+					CreateClinicalSummary3 window = new CreateClinicalSummary3(username, record);
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -49,17 +71,17 @@ public class CreateClinicalSummary3 {
 	/**
 	 * Create the application.
 	 */
-	public CreateClinicalSummary3(String username, String patientName, String CSID) {
+	public CreateClinicalSummary3(String username, List<String> record) {
 		initialize();
 		this.username = username;
-		this.patientName = patientName;
-		this.CSID = CSID;
+		this.record = record;
 		
-		txtPatient.setText(patientName);
-		txtReportID.setText(CSID);
+		Decrypter decrypt = new Decrypter();
+		String decryptedIC = decrypt.decrypter(record.get(0));
 		
-		Timestamp pytimestamp = new Timestamp(System.currentTimeMillis());
-		txtDTVisit.setText(pytimestamp.toString());
+		txtPatientIC.setText(decryptedIC);
+		txtPatient.setText(record.get(1));
+		txtReportID.setText(record.get(2));
 	}
 
 	/**
@@ -111,7 +133,7 @@ public class CreateClinicalSummary3 {
 		
 		JLabel lblNewLabel_3 = new JLabel("Report ID:");
 		lblNewLabel_3.setFont(new Font("Tahoma", Font.PLAIN, 15));
-		lblNewLabel_3.setBounds(451, 149, 101, 13);
+		lblNewLabel_3.setBounds(451, 145, 101, 21);
 		panel.add(lblNewLabel_3);
 		
 		txtReportID = new JTextField();
@@ -123,142 +145,310 @@ public class CreateClinicalSummary3 {
 		JButton btnBack = new JButton("Back");
         btnBack.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
-        		CreateClinicalSummary2.createAndShowGUI(username, patientName, CSID);
+        		CreateClinicalSummary2.createAndShowGUI(username, record);
+        		frame.dispose();
         	}
         });
         btnBack.setBounds(35, 26, 85, 21);
 		panel.add(btnBack);
 		
-		// Components for page3
-		JLabel DatetimeVisit = new JLabel("Datetime of Visit");
-        DatetimeVisit.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        DatetimeVisit.setBounds(35, 240, 143, 19);
-        panel.add(DatetimeVisit);
+		JLabel lblAdmissionRequired = new JLabel("Admission Required?");
+		lblAdmissionRequired.setFont(new Font("Tahoma", Font.PLAIN, 15));
+		lblAdmissionRequired.setBounds(33, 236, 145, 21);
+		panel.add(lblAdmissionRequired);
+		
+		JRadioButton rdbtnYes = new JRadioButton("Yes");
+		rdbtnYes.setFont(new Font("Tahoma", Font.PLAIN, 15));
+		rdbtnYes.setBounds(33, 263, 59, 21);
+		panel.add(rdbtnYes);
+		
+		JRadioButton rdbtnNo = new JRadioButton("No");
+		rdbtnNo.setFont(new Font("Tahoma", Font.PLAIN, 15));
+		rdbtnNo.setBounds(168, 263, 47, 21);
+		panel.add(rdbtnNo);
+		
+		ButtonGroup btnGroup = new ButtonGroup();
+		btnGroup.add(rdbtnYes);
+		btnGroup.add(rdbtnNo);
+		
+		ActionListener listener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	// if yes is selected
+            	if(rdbtnYes.isSelected()) {
+            	int rowCount = 0;	
+            	
+        		try {
+            		Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+                    Statement stmt = conn.createStatement();
+            		// Generate AdmissionID
+        	        ResultSet rs = stmt.executeQuery("SELECT * from BCD.Admission");
+        	        rowCount = 0;
+        	        while (rs.next()) {
+        	            rowCount++;
+        	        }
+        	        if(rowCount>=0)
+        	        {
+        	     	   rowCount+=1;
+        	     	   System.out.println("Proceed");
+        	     	   String prefix = "A";
+        	            // Find the number of digits in row
+        	            int numberOfDigits = String.valueOf(rowCount).length();                        
+        	            // Determine the number of zeros to prepend
+        	            int numberOfZeros = 4 - numberOfDigits;  // Assuming 4-digit CSID
+        	            // Create zeros string
+        	            StringBuilder zeros = new StringBuilder();
+        	            for (int i = 0; i < numberOfZeros; i++) {
+        	                zeros.append("0");
+        	            }
+        	            admissionID = (prefix + zeros + rowCount);    
+        	            System.out.println(admissionID);
+        	            record.add(admissionID);
+        	        }
+        	        else
+        	        {
+        	     	   System.out.println("Error");  
+        	        }
+    	        }
+    	        catch(SQLException e1) {
+    	        	e1.printStackTrace();
+    	        }
+        		// Populate DateTime of Admission
+                admissionTimestamp = new Timestamp(System.currentTimeMillis());
+        		}
+            }
+        };
         
-        txtDTVisit = new JTextField();
-        txtDTVisit.setBounds(33, 270, 143, 32);
-        txtDTVisit.setEnabled(false);
-		panel.add(txtDTVisit);
-		txtDTVisit.setColumns(10);
-        
-        JLabel PrincipalDoctor = new JLabel("Principal Doctor");
-        PrincipalDoctor.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        PrincipalDoctor.setBounds(451, 240, 143, 19);
-        panel.add(PrincipalDoctor);
-        
-        JTextField txtDoc = new JTextField();
-        txtDoc.setBounds(451, 270, 143, 32);
-		panel.add(txtDoc);
-		txtDoc.setColumns(10);
+        rdbtnYes.addActionListener(listener);
+        rdbtnNo.addActionListener(listener);
 		
 		// Prepared by
 		JLabel PreparedBy = new JLabel("Prepared By:");
 		PreparedBy.setFont(new Font("Tahoma", Font.PLAIN, 15));
-		PreparedBy.setBounds(33, 324, 143, 19);
+		PreparedBy.setBounds(33, 313, 143, 19);
         panel.add(PreparedBy);
         
         // Name
         JLabel lblName = new JLabel("Name:");
         lblName.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblName.setBounds(33, 361, 143, 19);
+        lblName.setBounds(33, 350, 143, 19);
         panel.add(lblName);
 
-        JTextField txtName = new JTextField();
-        txtName.setBounds(190, 357, 143, 32);
+        txtName = new JTextField();
+        txtName.setBounds(190, 346, 143, 32);
         txtName.setEnabled(false);
         panel.add(txtName);
 
         // Designation
         JLabel lblDesignation = new JLabel("Designation:");
         lblDesignation.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblDesignation.setBounds(33, 405, 143, 19);
+        lblDesignation.setBounds(33, 394, 143, 19);
         panel.add(lblDesignation);
 
-        JTextField txtDesignation = new JTextField();
-        txtDesignation.setBounds(190, 401, 143, 32);
+        txtDesignation = new JTextField();
+        txtDesignation.setBounds(190, 390, 143, 32);
         txtDesignation.setEnabled(false);
         panel.add(txtDesignation);
 
         // Department
         JLabel lblDepartment = new JLabel("Department:");
         lblDepartment.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblDepartment.setBounds(35, 449, 143, 19);
+        lblDepartment.setBounds(35, 438, 143, 19);
         panel.add(lblDepartment);
 
-        JTextField txtDepartment = new JTextField();
-        txtDepartment.setBounds(190, 443, 143, 32);
+        txtDepartment = new JTextField();
+        txtDepartment.setBounds(190, 432, 143, 32);
         txtDepartment.setEnabled(false);
         panel.add(txtDepartment);
 
         // Datetime of Preparation
         JLabel lblDatetime = new JLabel("Preparation Datetime:");
         lblDatetime.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblDatetime.setBounds(35, 493, 180, 19);
+        lblDatetime.setBounds(35, 482, 180, 19);
         panel.add(lblDatetime);
 
-        JTextField txtDatetime = new JTextField();
-        txtDatetime.setBounds(190, 485, 143, 32);
+        txtDatetime = new JTextField();
+        txtDatetime.setBounds(190, 474, 143, 32);
         txtDatetime.setEnabled(false);
         panel.add(txtDatetime);
         
         // Signature
         JLabel lblSignature = new JLabel("Signature:");
         lblSignature.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        lblSignature.setBounds(35, 537, 180, 19);
+        lblSignature.setBounds(35, 526, 180, 19);
         panel.add(lblSignature);
 
-        JTextField txtSignature = new JTextField();
-        txtSignature.setBounds(190, 531, 143, 32);
+        txtSignature = new JTextField();
+        txtSignature.setBounds(190, 520, 143, 32);
         txtSignature.setEnabled(false);
         panel.add(txtSignature);
         
         JButton btnSign = new JButton("Sign");
         btnSign.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-            	String name = null;
-            	String designation = null;
-            	String department = null;
-            	try {
-            		Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
-                    Statement stmt = conn.createStatement();
-                    ResultSet rs = stmt.executeQuery("SELECT * from BCD.clinician where username = '" + username + "'");
-                    name = rs.getString("name");
-                    designation = rs.getString("designation");
-                    department = rs.getString("department");
-            	} catch (SQLException e1) {
-                    e1.printStackTrace();
-                }
-    
-            	txtName.setText(name);
-            	txtDesignation.setText(designation);
-            	txtDepartment.setText(department);
-            	txtDatetime.setText((new Timestamp(System.currentTimeMillis())).toString());
-            	
-            	// to-do: Concat all data into one String
-                String CSRecord = "";
-                PrivateKey privateKey = null;
-                try {
-                    privateKey = AccessKey.getPrivateKey("KeyManagement/" + username + "/AsymmetricKeyPair/PrivateKey");
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
-                if (privateKey != null) {
-                	UserSignature userSignature = new UserSignature();
-                	byte[] signature = userSignature.getSignature(CSRecord, privateKey);
-                }
-            }
+			@Override
+			public void actionPerformed(ActionEvent sbevt) {
+				// TODO Auto-generated method stub
+				actionSignButtonPerformed();
+			}
 		});
-        btnSign.setBounds(186, 325, 85, 21);
+        btnSign.setBounds(190, 569, 85, 21);
 		panel.add(btnSign);
 		
-		JButton btnNext = new JButton("Next");
+		btnNext = new JButton("Next");
 		btnNext.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				ManageAdmission.createAndShowGUI();
+				actionNextPerformed();
+				frame.dispose();
 			}
 		});
 		btnNext.setBounds(509, 572, 85, 21);
+		btnNext.setEnabled(false);
 		panel.add(btnNext);
 	}
-
+	
+	public void actionSignButtonPerformed() {
+		
+		// initialize variables
+    	String name = null;
+    	String designation = null;
+    	String department = null;
+    	String dtSign = null;
+    	
+    	// Database part
+    	// Step 1: assign variables with data
+    	try {
+    		Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+            Statement stmt = conn.createStatement();
+            ResultSet rs1 = stmt.executeQuery("SELECT * from BCD.clinician where username = '" + username + "'");
+            while(rs1.next())
+            {
+            	clinicianID = rs1.getString("clinicianID");
+            	name = rs1.getString("name");
+                designation = rs1.getString("designation");
+                department = rs1.getString("department");
+                hospitalID = rs1.getString("hospitalID");
+            } 
+    	
+	    	dtSign = (new Timestamp(System.currentTimeMillis())).toString();
+	
+	    	// populate data to text field
+	    	txtName.setText(name);
+	    	txtDesignation.setText(designation);
+	    	txtDepartment.setText(department);
+	    	txtDatetime.setText(dtSign);
+	    	
+	    	// Step 2: Finalize CSRecord String
+	        CSRecord = record.get(2) + "|" + record.get(0) + "|" + record.get(3) + "|" + record.get(4) +
+	        		"|" + record.get(5) + "|" + record.get(6) + "|" + record.get(7) + "|" + record.get(8) +
+	        		"|" + record.get(9) + "|" + record.get(10) + "|" + record.get(11);
+	        System.out.println(CSRecord);
+	        
+	        // hash the CSRecord
+	        String salt = BCrypt.gensalt();
+	        hashRecord = BCrypt.hashpw(CSRecord, salt);
+    	}catch(SQLException e) {
+    		e.printStackTrace();
+    	}
+	        
+        // step 3: generate private key
+        PrivateKey privateKey = null;
+        try {
+            privateKey = AccessKey.getPrivateKey("KeyManagement/" + username + "/AsymmetricKeyPair/PrivateKey");
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
+        if (privateKey != null) {
+        	// step 5: set digital signature
+        	UserSignature userSignature = new UserSignature();
+        	byte[] signature = userSignature.getSignature(hashRecord, privateKey);
+        	txtSignature.setText(signature.toString());
+        }
+        
+		// step 4: enable button
+		btnNext.setEnabled(true);
+    }
+	
+	public void actionNextPerformed() {
+		int rowCount;
+		String reportID = null;
+		
+	
+		try {
+			Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+            Statement stmt = conn.createStatement();
+            
+			// step 1: save record into db: ClinicalSummary, ReportPreparedBy, Admission
+	        // ClinicalSummary
+	        String query2 = "INSERT INTO BCD.ClinicalSummary (ClinicalSummaryID, Hash, HospitalID, IC_No) "
+	        		+ "VALUES ('"+ record.get(2) + "','" + hashRecord + "','" + hospitalID + "','" + record.get(0) + "')";
+	        int rs2 = stmt.executeUpdate(query2);
+	        
+	    	// ReportPreparedBy
+	        ResultSet rs3 = stmt.executeQuery("SELECT * from BCD.ReportPreparedBy");
+	        rowCount = 0;
+	        while (rs3.next()) {
+	            rowCount++;
+	        }
+	        if(rowCount>=0)
+	        {
+	     	   rowCount+=1;
+	     	   System.out.println("Proceed");
+	     	   String prefix = "R";
+	            // Find the number of digits in row
+	            int numberOfDigits = String.valueOf(rowCount).length();                        
+	            // Determine the number of zeros to prepend
+	            int numberOfZeros = 4 - numberOfDigits;  // Assuming 4-digit CSID
+	            // Create zeros string
+	            StringBuilder zeros = new StringBuilder();
+	            for (int i = 0; i < numberOfZeros; i++) {
+	                zeros.append("0");
+	            }
+	            reportID = (prefix + zeros + rowCount);    
+	            System.out.println(reportID);
+	        }
+	        else
+	        {
+	     	   System.out.println("Error");  
+	        }
+	        
+	        String query3 = "INSERT INTO BCD.ReportPreparedBy (ReportID, ClinicianID, ClinicalSummaryID) "
+	        		+ "VALUES ('" + reportID + "','" + clinicianID + "','" + record.get(2) + "')";
+	        int rs4 = stmt.executeUpdate(query3);
+	
+	        if(!(admissionID.isEmpty())) {
+	        	// Admission
+		        String query4 = "INSERT INTO BCD.Admission (AdmissionID, PatientID, DatetimeOfAdmission, CSID) "
+		        		+ "VALUES ('"+ admissionID + "','" + record.get(0) + "','" + admissionTimestamp + "','" + record.get(2) + "')";
+		        int rs5 = stmt.executeUpdate(query4);
+	        }
+		} catch (SQLException e2) {
+	        e2.printStackTrace();
+	    }
+	
+		// step 2: Add to blockchain
+        final String masterFolder = "masterEHR";
+		final String fileName = masterFolder + "/chain.bin";
+		
+		Blockchain EHRchain = Blockchain.get_instance(fileName);
+		if (!new File(masterFolder).exists()) {
+			System.err.println("> creating Blockchain binary !");
+			new File(masterFolder).mkdir();
+			/* create genesis block */
+			EHRchain.genesis();
+			EHRchain.distribute();
+		} 
+		
+		//block-1
+		RecordCollection ehrLst = new RecordCollection();
+		ehrLst.add(CSRecord);
+		String previousHash = EHRchain.get().getLast().getHeader().getCurrentHash();
+		Block b1 = new Block(previousHash);
+		b1.setEhrContainer(ehrLst);
+		
+		//add block into chain
+		EHRchain.nextBlock(b1);
+		EHRchain.distribute();
+		
+		System.out.println(b1);
+	}
 }
