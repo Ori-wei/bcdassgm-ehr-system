@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -19,14 +20,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-
 import BlockchainObject.ClinicalSummary;
 import DatabaseObject.Patient;
 import SymmetricEncryption.Decrypter;
@@ -34,6 +33,7 @@ import SymmetricEncryption.Encrypter;
 import ehrBlockchain.Block;
 import ehrBlockchain.Blockchain;
 import ehrBlockchain.RecordCollection;
+import ehrBlockchain.RecordHandler;
 
 public class CreateDischarge {
 
@@ -43,7 +43,7 @@ public class CreateDischarge {
     public String CSID;
     public String patientID;
     public String patientName;
-    private Timestamp pytimestamp;
+    private Timestamp dischargetimestamp;
     private String statusAtDischarge;
     public String admissionID;
     private JTextField txtPatientIC;
@@ -85,8 +85,8 @@ public class CreateDischarge {
         }
         
         // Populate DateTime of Visit
-        pytimestamp = new Timestamp(System.currentTimeMillis());
-        datetimeDischargeField.setText(pytimestamp.toString());
+        dischargetimestamp = new Timestamp(System.currentTimeMillis());
+        datetimeDischargeField.setText(dischargetimestamp.toString());
         
         // Populate Admission iD
         try {
@@ -203,7 +203,7 @@ public class CreateDischarge {
     	try {
     		Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
             Statement stmt = conn.createStatement();
-            String query = "UPDATE BCD.Admission SET DATETIMEOFDISCHARGE = " + pytimestamp + ","
+            String query = "UPDATE BCD.Admission SET DATETIMEOFDISCHARGE = " + dischargetimestamp + ","
             		+ " STATUSATDISCHARGE = " + statusAtDischarge + " WHERE ADMISSIONID = " + admissionID;
             int rs = stmt.executeUpdate(query);
             
@@ -245,9 +245,44 @@ public class CreateDischarge {
     	            }
     	        }
         	// Step 4: Concat both string
-    	    
+    	    String updatedCSRecord = recordInfo + "|" + dtAdmission + "|" + dischargetimestamp + "|" + statusAtDischarge;
             
         	// Step 5: Insert new record into blockchain
+    	    final String masterFolder1 = "masterEHR";
+    		final String fileName1 = masterFolder + "/chain.bin";
+    		
+    		// add Record to list
+    		RecordCollection accumulatedRecords = RecordHandler.deserializeRecords();
+    		accumulatedRecords.add(updatedCSRecord);
+    		
+    		// if 4records are accumulated, access blockchain
+    		if (accumulatedRecords.getEhrList().size() == 4) {
+    	        Blockchain EHRchain1 = Blockchain.get_instance(fileName1);
+
+    	        if (!new File(masterFolder1).exists()) {
+    	            System.err.println("> creating Blockchain binary !");
+    	            new File(masterFolder1).mkdir();
+    	            
+    	            // create genesis block
+    	            EHRchain1.genesis();
+    	            EHRchain1.distribute();
+    	        }
+    	        
+    	        // create block
+    	        String previousHash = EHRchain1.get().getLast().getHeader().getCurrentHash();
+    	        Block b1 = new Block(previousHash);
+    	        b1.setEhrContainer(accumulatedRecords); // Assuming setEhrContainer accepts RecordCollection
+    	        System.out.println(b1);
+
+    	        EHRchain1.nextBlock(b1);
+    	        EHRchain1.distribute();
+
+    	        // Clear the accumulated records as they have been added to a block
+    	        accumulatedRecords = new RecordCollection();
+    	    }
+
+    	    // Serialize the current state of accumulated records
+    	    RecordHandler.serializeRecords(accumulatedRecords);
     	}catch(Exception e) {
     		e.printStackTrace();
     	}  
