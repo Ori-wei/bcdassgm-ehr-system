@@ -47,6 +47,8 @@ public class CreateClinicalSummary1 {
 	private JTextField txtDoc;
 	private JTextArea txtHistory;
 	private JTextArea txtPhysicalExm;
+	public List<String> record;
+	
 
 	/**
 	 * Launch the application.
@@ -56,6 +58,19 @@ public class CreateClinicalSummary1 {
 			public void run() {
 				try {
 					CreateClinicalSummary1 window = new CreateClinicalSummary1(username);
+					window.frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+	
+	public static void createAndShowGUI(String username, List<String> record) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					CreateClinicalSummary1 window = new CreateClinicalSummary1(username, record);
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -139,6 +154,53 @@ public class CreateClinicalSummary1 {
         Timestamp pytimestamp = new Timestamp(System.currentTimeMillis());
 		txtDTVisit.setText(pytimestamp.toString());
         
+	}
+	
+	public CreateClinicalSummary1(String username, List<String> record) {
+		initialize();
+		this.username = username;
+		this.record = record;
+		
+		//Populate PatientID dropdown
+        List<Patient> patientList = new ArrayList<>();
+        try {
+	    	Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+	        Statement stmt = conn.createStatement();
+	        ResultSet rs = stmt.executeQuery("SELECT * from BCD.patient");
+            while (rs.next()) {
+            	//decrypt it!
+				Decrypter decypt = new Decrypter();
+            	String decryptedIC = decypt.decrypter(rs.getString("IC_No"));
+            	System.out.println("Original Content: " + decryptedIC);
+            	Patient patient = new Patient(decryptedIC, rs.getString("name"));
+                patientList.add(patient);
+            }
+        } catch (SQLException e1) {
+            e1.printStackTrace();
+        }
+        try {
+            for (Patient patient : patientList) {
+            	patientID = patient.getPatientID();
+            	patientName = patient.getName();   
+            	cbPatientID.addItem(patient);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+		
+		if(!(record.isEmpty())) {
+			Decrypter decrypt = new Decrypter();
+			String decryptedIC = decrypt.decrypter(record.get(0));
+			
+			cbPatientID.setSelectedItem(decryptedIC);
+			txtPatient.setText(record.get(1));
+			txtReportID.setText(record.get(2));
+			specialistDropdown.setSelectedItem(record.get(3));
+			txtDTVisit.setText(record.get(4));
+			txtDoc.setText(record.get(5));
+			txtHistory.setText(record.get(6));
+			txtPhysicalExm.setText(record.get(7));
+		}
 	}
 
 	/**
@@ -271,9 +333,9 @@ public class CreateClinicalSummary1 {
 	
 	public void nextActionPerformed() {
 		Encrypter encypt = new Encrypter();
-		String encryptedIC = encypt.encrypter(cbPatientID.getSelectedItem().toString());
+		String encryptedIC = encypt.encrypter(cbPatientID.getSelectedItem().toString());		
 		
-		List<String> record = new ArrayList<String>();
+		record = new ArrayList<String>();
 		record.add(encryptedIC);
 		record.add(txtPatient.getText());
 		record.add(CSID);

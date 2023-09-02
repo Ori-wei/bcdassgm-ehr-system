@@ -28,6 +28,7 @@ import asymmetric.AccessKey;
 import ehrBlockchain.Block;
 import ehrBlockchain.Blockchain;
 import ehrBlockchain.RecordCollection;
+import ehrBlockchain.RecordHandler;
 
 import javax.swing.JRadioButton;
 
@@ -51,6 +52,10 @@ public class CreateClinicalSummary3 {
 	private String hashRecord = null;
 	private String hospitalID = null;
 	private String clinicianID = null;
+	private JButton btnBack;
+	private JRadioButton rdbtnYes;
+	private JRadioButton rdbtnNo;
+	private JButton btnSign;
 
 	/**
 	 * Launch the application.
@@ -142,7 +147,7 @@ public class CreateClinicalSummary3 {
 		panel.add(txtReportID);
 		txtReportID.setColumns(10);
 		
-		JButton btnBack = new JButton("Back");
+		btnBack = new JButton("Back");
         btnBack.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
         		CreateClinicalSummary2.createAndShowGUI(username, record);
@@ -157,12 +162,12 @@ public class CreateClinicalSummary3 {
 		lblAdmissionRequired.setBounds(33, 236, 145, 21);
 		panel.add(lblAdmissionRequired);
 		
-		JRadioButton rdbtnYes = new JRadioButton("Yes");
+		rdbtnYes = new JRadioButton("Yes");
 		rdbtnYes.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		rdbtnYes.setBounds(33, 263, 59, 21);
 		panel.add(rdbtnYes);
 		
-		JRadioButton rdbtnNo = new JRadioButton("No");
+		rdbtnNo = new JRadioButton("No");
 		rdbtnNo.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		rdbtnNo.setBounds(168, 263, 47, 21);
 		panel.add(rdbtnNo);
@@ -283,7 +288,7 @@ public class CreateClinicalSummary3 {
         txtSignature.setEnabled(false);
         panel.add(txtSignature);
         
-        JButton btnSign = new JButton("Sign");
+        btnSign = new JButton("Sign");
         btnSign.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent sbevt) {
@@ -336,11 +341,19 @@ public class CreateClinicalSummary3 {
 	    	txtDesignation.setText(designation);
 	    	txtDepartment.setText(department);
 	    	txtDatetime.setText(dtSign);
+	    	Timestamp timestampNow = new Timestamp(System.currentTimeMillis());
 	    	
 	    	// Step 2: Finalize CSRecord String
-	        CSRecord = record.get(2) + "|" + record.get(0) + "|" + record.get(3) + "|" + record.get(4) +
-	        		"|" + record.get(5) + "|" + record.get(6) + "|" + record.get(7) + "|" + record.get(8) +
-	        		"|" + record.get(9) + "|" + record.get(10) + "|" + record.get(11);
+	    	if (admissionID.isEmpty()) {
+	    		CSRecord = record.get(2) + "|" + record.get(0) + "|" + record.get(3) + "|" + record.get(4) +
+		        		"|" + record.get(5) + "|" + record.get(6) + "|" + record.get(7) + "|" + record.get(8) +
+		        		"|" + record.get(9) + "|" + record.get(10) + "|" + record.get(11) + "|" + "NA" + "|" + timestampNow;
+	    	}else {
+	    		CSRecord = record.get(2) + "|" + record.get(0) + "|" + record.get(3) + "|" + record.get(4) +
+		        		"|" + record.get(5) + "|" + record.get(6) + "|" + record.get(7) + "|" + record.get(8) +
+		        		"|" + record.get(9) + "|" + record.get(10) + "|" + record.get(11) + "|" + record.get(12) + "|" + timestampNow;
+	    	}
+	        
 	        System.out.println(CSRecord);
 	        
 	        // hash the CSRecord
@@ -358,26 +371,66 @@ public class CreateClinicalSummary3 {
             e1.printStackTrace();
         }
         if (privateKey != null) {
-        	// step 5: set digital signature
+        	// step 4: set digital signature
         	UserSignature userSignature = new UserSignature();
         	byte[] signature = userSignature.getSignature(hashRecord, privateKey);
         	txtSignature.setText(signature.toString());
         }
         
-		// step 4: enable button
+		// step 5: control buttons
 		btnNext.setEnabled(true);
+		btnBack.setEnabled(false);
+		rdbtnYes.setEnabled(false);
+		rdbtnNo.setEnabled(false);
+		btnSign.setEnabled(false);
+		
+		// step 6: add to blockchain
+        final String masterFolder = "masterEHR";
+		final String fileName = masterFolder + "/chain.bin";
+		
+		// add Record to list
+		RecordCollection accumulatedRecords = RecordHandler.deserializeRecords();
+		accumulatedRecords.add(CSRecord);
+		
+		// if 4records are accumulated, access blockchain
+		if (accumulatedRecords.getEhrList().size() == 4) {
+	        Blockchain EHRchain = Blockchain.get_instance(fileName);
+
+	        if (!new File(masterFolder).exists()) {
+	            System.err.println("> creating Blockchain binary !");
+	            new File(masterFolder).mkdir();
+	            
+	            // create genesis block
+	            EHRchain.genesis();
+	            EHRchain.distribute();
+	        }
+	        
+	        // create block
+	        String previousHash = EHRchain.get().getLast().getHeader().getCurrentHash();
+	        Block b1 = new Block(previousHash);
+	        b1.setEhrContainer(accumulatedRecords); // Assuming setEhrContainer accepts RecordCollection
+	        System.out.println(b1);
+
+	        EHRchain.nextBlock(b1);
+	        EHRchain.distribute();
+
+	        // Clear the accumulated records as they have been added to a block
+	        accumulatedRecords = new RecordCollection();
+	    }
+
+	    // Serialize the current state of accumulated records
+	    RecordHandler.serializeRecords(accumulatedRecords);
     }
 	
 	public void actionNextPerformed() {
 		int rowCount;
 		String reportID = null;
 		
-	
+		// save record into db: ClinicalSummary, ReportPreparedBy, Admission
 		try {
 			Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
             Statement stmt = conn.createStatement();
             
-			// step 1: save record into db: ClinicalSummary, ReportPreparedBy, Admission
 	        // ClinicalSummary
 	        String query2 = "INSERT INTO BCD.ClinicalSummary (ClinicalSummaryID, Hash, HospitalID, IC_No) "
 	        		+ "VALUES ('"+ record.get(2) + "','" + hashRecord + "','" + hospitalID + "','" + record.get(0) + "')";
@@ -415,8 +468,8 @@ public class CreateClinicalSummary3 {
 	        		+ "VALUES ('" + reportID + "','" + clinicianID + "','" + record.get(2) + "')";
 	        int rs4 = stmt.executeUpdate(query3);
 	
+	        // Admission
 	        if(!(admissionID.isEmpty())) {
-	        	// Admission
 		        String query4 = "INSERT INTO BCD.Admission (AdmissionID, PatientID, DatetimeOfAdmission, CSID) "
 		        		+ "VALUES ('"+ admissionID + "','" + record.get(0) + "','" + admissionTimestamp + "','" + record.get(2) + "')";
 		        int rs5 = stmt.executeUpdate(query4);
@@ -424,31 +477,5 @@ public class CreateClinicalSummary3 {
 		} catch (SQLException e2) {
 	        e2.printStackTrace();
 	    }
-	
-		// step 2: Add to blockchain
-        final String masterFolder = "masterEHR";
-		final String fileName = masterFolder + "/chain.bin";
-		
-		Blockchain EHRchain = Blockchain.get_instance(fileName);
-		if (!new File(masterFolder).exists()) {
-			System.err.println("> creating Blockchain binary !");
-			new File(masterFolder).mkdir();
-			/* create genesis block */
-			EHRchain.genesis();
-			EHRchain.distribute();
-		} 
-		
-		//block-1
-		RecordCollection ehrLst = new RecordCollection();
-		ehrLst.add(CSRecord);
-		String previousHash = EHRchain.get().getLast().getHeader().getCurrentHash();
-		Block b1 = new Block(previousHash);
-		b1.setEhrContainer(ehrLst);
-		
-		//add block into chain
-		EHRchain.nextBlock(b1);
-		EHRchain.distribute();
-		
-		System.out.println(b1);
 	}
 }
