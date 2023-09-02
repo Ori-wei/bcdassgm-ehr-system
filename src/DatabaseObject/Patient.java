@@ -12,13 +12,16 @@ public class Patient {
 	private String relationship;
 	private String emergencyPhoneNumber;
 	
-	
-	
 	public Patient(String patientID, String name) {
-		super();
 		this.patientID = patientID;
 		this.name = name;
 	}
+	
+	public Patient (String name, String sex, String nothing) {
+        this.name=name;
+        this.sex=sex;
+    }
+	
 	public String getPatientID() {
 		return patientID;
 	}

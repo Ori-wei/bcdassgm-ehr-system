@@ -17,12 +17,16 @@ public class app {
 			EHRchain.genesis();
 			EHRchain.distribute();
 			
-		} else {
-			// dummy record
-			String tranx1 = "alice|bob|debit|rm|10";
-			String tranx2 = "helen|bob|debit|rm|20";
-			String tranx3 = "helen|bob|debit|rm|30";
-			String tranx4 = "helen|bob|debit|rm|40";
+		} else {	
+//			String tranx1 = "CS0001|BD/5lZqGUxOQcYEnbMrrMg==|2023-04-21";
+//			String tranx2 = "CS0002|BD/5lZqGUxOQcYEnbMrrMg==|2022-02-22";
+//			String tranx3 = "CS0002|BD/5lZqGUxOQcYEnbMrrMg==|2022-08-30";
+//			String tranx4 = "CS0001|BD/5lZqGUxOQcYEnbMrrMg==|2023-06-30";
+			
+			String tranx1 = "CS0003|BD/5lZqGUxOQcYEnbMrrMg==|2023-05-21";
+			String tranx2 = "CS0001|BD/5lZqGUxOQcYEnbMrrMg==|2022-07-22";
+			String tranx3 = "CS0003|BD/5lZqGUxOQcYEnbMrrMg==|2022-08-31";
+			String tranx4 = "CS0002|BD/5lZqGUxOQcYEnbMrrMg==|2023-09-01";
 			
 			RecordCollection tranxLst = new RecordCollection();
 			tranxLst.add(tranx1);
