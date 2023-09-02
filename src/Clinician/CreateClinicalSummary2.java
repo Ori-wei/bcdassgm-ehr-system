@@ -4,6 +4,7 @@ import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -11,24 +12,31 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import SymmetricEncryption.Decrypter;
+import SymmetricEncryption.Encrypter;
+
+
 public class CreateClinicalSummary2 {
 
 	private JFrame frame;
 	public String username;
-	public String patientName;
-	public String CSID;
+	public List<String> record;
 	private JTextField txtPatient;
 	private JTextField txtReportID;
 	private JTextField txtPatientIC;
+	private JTextArea txtDiagnosis;
+	private JTextArea txtSumIvsg;
+	private JTextArea txtTreatment;
+	private JTextArea txtFllwUp;
 
 	/**
 	 * Launch the application.
 	 */
-	public static void createAndShowGUI(String username, String patientName, String CSID) {
+	public static void createAndShowGUI(String username, List<String> record) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					CreateClinicalSummary2 window = new CreateClinicalSummary2(username, patientName, CSID);
+					CreateClinicalSummary2 window = new CreateClinicalSummary2(username, record);
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -40,13 +48,17 @@ public class CreateClinicalSummary2 {
 	/**
 	 * Create the application.
 	 */
-	public CreateClinicalSummary2(String username, String patientName, String CSID) {
+	public CreateClinicalSummary2(String username, List<String> record) {
 		initialize();
 		this.username = username;
-		this.CSID = CSID;
+		this.record = record;
 		
-		txtPatient.setText(patientName);
-		txtReportID.setText(CSID);
+		Decrypter decrypt = new Decrypter();
+		String decryptedIC = decrypt.decrypter(record.get(0));
+		
+		txtPatientIC.setText(decryptedIC);
+		txtPatient.setText(record.get(1));
+		txtReportID.setText(record.get(2));
 	}
 
 	/**
@@ -67,6 +79,7 @@ public class CreateClinicalSummary2 {
         btnBack.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
         		CreateClinicalSummary1.createAndShowGUI(username);
+        		frame.dispose();
         	}
         });
         btnBack.setBounds(35, 26, 85, 21);
@@ -121,48 +134,53 @@ public class CreateClinicalSummary2 {
 		Diagnosis.setBounds(33, 217, 143, 19);
 		panel.add(Diagnosis);
 		
-		JTextArea textArea_2 = new JTextArea();
-		textArea_2.setBounds(35, 246, 557, 58);
-		panel.add(textArea_2);
+		txtDiagnosis = new JTextArea();
+		txtDiagnosis.setBounds(35, 246, 557, 58);
+		panel.add(txtDiagnosis);
 		
         JLabel SumInvestigation = new JLabel("Summary of Investigation");
         SumInvestigation.setFont(new Font("Tahoma", Font.PLAIN, 15));
         SumInvestigation.setBounds(33, 317, 180, 19);
         panel.add(SumInvestigation);
         
-        JTextArea textArea_4 = new JTextArea();
-		textArea_4.setBounds(35, 346, 557, 58);
-		panel.add(textArea_4);
+        txtSumIvsg = new JTextArea();
+        txtSumIvsg.setBounds(35, 346, 557, 58);
+		panel.add(txtSumIvsg);
 		
         JLabel treatment = new JLabel("Treatment");
         treatment.setFont(new Font("Tahoma", Font.PLAIN, 15));
         treatment.setBounds(39, 417, 143, 19);
         panel.add(treatment);
         
-        JTextArea textArea_5 = new JTextArea();
-		textArea_5.setBounds(37, 446, 557, 58);
-		panel.add(textArea_5);
+        txtTreatment = new JTextArea();
+        txtTreatment.setBounds(37, 446, 557, 58);
+		panel.add(txtTreatment);
         
         JLabel FupProgress = new JLabel("Follow-up Progress");
         FupProgress.setFont(new Font("Tahoma", Font.PLAIN, 15));
         FupProgress.setBounds(35, 517, 143, 19);
         panel.add(FupProgress);
         
-        JTextArea textArea_6 = new JTextArea();
-		textArea_6.setBounds(37, 546, 557, 58);
-		panel.add(textArea_6);
+        txtFllwUp = new JTextArea();
+        txtFllwUp.setBounds(37, 546, 557, 58);
+		panel.add(txtFllwUp);
 		
 		JButton btnNext = new JButton("Next");
 		btnNext.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				actionPerformed(evt);
+				nextActionPerformed();
 			}
 		});
 		btnNext.setBounds(509, 609, 85, 21);
 		panel.add(btnNext);
 	}
 
-	public void actionPerformed(ActionEvent evt) {
-		CreateClinicalSummary2.createAndShowGUI(username, patientName, CSID);
+	public void nextActionPerformed() {
+		record.add(txtDiagnosis.getText());
+		record.add(txtSumIvsg.getText());
+		record.add(txtTreatment.getText());
+		record.add(txtFllwUp.getText());
+		CreateClinicalSummary3.createAndShowGUI(username, record);
+		frame.dispose();
 	}
 }

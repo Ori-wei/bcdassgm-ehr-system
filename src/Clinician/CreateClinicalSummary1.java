@@ -7,7 +7,9 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.ButtonGroup;
@@ -21,6 +23,7 @@ import javax.swing.JTextField;
 import DatabaseObject.Hospital;
 import DatabaseObject.Patient;
 import SymmetricEncryption.Decrypter;
+import SymmetricEncryption.Encrypter;
 
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
@@ -32,12 +35,18 @@ import javax.swing.JComboBox;
 public class CreateClinicalSummary1 {
 	
 	public String username;
+	public String patientID;
 	public String patientName = null;
 	public String CSID = null;
 	private JFrame frame;
 	private JTextField txtPatient;
 	private JTextField txtReportID;
 	private JComboBox<Patient> cbPatientID;
+	private JTextField txtDTVisit;
+	private JComboBox<String> specialistDropdown;
+	private JTextField txtDoc;
+	private JTextArea txtHistory;
+	private JTextArea txtPhysicalExm;
 
 	/**
 	 * Launch the application.
@@ -61,14 +70,9 @@ public class CreateClinicalSummary1 {
 	public CreateClinicalSummary1(String username) {
 		initialize();
 		this.username = username;
-		String patientID;
-		String patientName;
-		
-		// Populate Patient Name
-		
 		
 		// Generate CSID
-        String CSID = null;
+        CSID = null;
 		int rowCount;
         try (Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
 	             Statement stmt = conn.createStatement();
@@ -123,13 +127,17 @@ public class CreateClinicalSummary1 {
         }
         try {
             for (Patient patient : patientList) {
-            	patientID=patient.getPatientID();
+            	patientID = patient.getPatientID();
             	patientName = patient.getName();   
             	cbPatientID.addItem(patient);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-        }  
+        }
+        
+        // Populate DateTime of Visit
+        Timestamp pytimestamp = new Timestamp(System.currentTimeMillis());
+		txtDTVisit.setText(pytimestamp.toString());
         
 	}
 
@@ -163,6 +171,20 @@ public class CreateClinicalSummary1 {
         lblIC.setFont(new Font("Tahoma", Font.PLAIN, 15));
         lblIC.setBounds(33, 149, 101, 13);
 		panel.add(lblIC);
+		
+		cbPatientID = new JComboBox();
+		cbPatientID.setBounds(33, 175, 134, 32);
+		cbPatientID.addItemListener(new ItemListener() {
+		    @Override
+		    public void itemStateChanged(ItemEvent e) {
+		        if (e.getStateChange() == ItemEvent.SELECTED) {
+		            Patient selectedPatient = (Patient) e.getItem();
+		            String patientName = selectedPatient.getName();
+		            txtPatient.setText(patientName);
+		        }
+		    }
+		});
+		panel.add(cbPatientID);
         
 		JLabel lblNewLabel_2 = new JLabel("Patient Name");
 		lblNewLabel_2.setFont(new Font("Tahoma", Font.PLAIN, 15));
@@ -186,128 +208,81 @@ public class CreateClinicalSummary1 {
 		panel.add(txtReportID);
 		txtReportID.setColumns(10);
         
-        JLabel lblNewLabel_2_1 = new JLabel("History");
+		JLabel lblSpecialist = new JLabel("Area of Specialist");
+		lblSpecialist.setFont(new Font("Tahoma", Font.PLAIN, 15));
+		lblSpecialist.setBounds(29, 240, 132, 19);
+		panel.add(lblSpecialist);
+		
+		specialistDropdown = new JComboBox<>(new String[] 
+				{"Cardiology", "Endocrinology", "Gastroenterology", "Hematology",
+						"Infectious Diseases", "Nephrology", "Oncology", "Pulmonology",
+						"Rheumatology", "Critical Care Medicine", "Geriatric Medicine", "Immunology"});
+		specialistDropdown.setBounds(27, 269, 150, 32);
+        panel.add(specialistDropdown);
+        
+        JLabel DatetimeVisit = new JLabel("Datetime of Visit");
+        DatetimeVisit.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        DatetimeVisit.setBounds(235, 240, 143, 19);
+        panel.add(DatetimeVisit);
+        
+        txtDTVisit = new JTextField();
+        txtDTVisit.setBounds(237, 270, 143, 32);
+        txtDTVisit.setEnabled(false);
+		panel.add(txtDTVisit);
+		txtDTVisit.setColumns(10);
+        
+		JLabel PrincipalDoctor = new JLabel("Principal Doctor");
+        PrincipalDoctor.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        PrincipalDoctor.setBounds(451, 240, 143, 19);
+        panel.add(PrincipalDoctor);
+        
+        txtDoc = new JTextField();
+        txtDoc.setBounds(451, 270, 143, 32);
+		panel.add(txtDoc);
+		txtDoc.setColumns(10);
+		
+		JLabel lblNewLabel_2_1 = new JLabel("History");
 		lblNewLabel_2_1.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		lblNewLabel_2_1.setBounds(35, 338, 101, 19);
 		panel.add(lblNewLabel_2_1);
 		
-		JTextArea txtHistory = new JTextArea();
+		txtHistory = new JTextArea();
 		txtHistory.setBounds(37, 367, 557, 58);
 		panel.add(txtHistory);
-		
-		JLabel lblSpecialist = new JLabel("Area of Specialist");
-		lblSpecialist.setFont(new Font("Tahoma", Font.PLAIN, 15));
-		lblSpecialist.setBounds(35, 219, 132, 19);
-		panel.add(lblSpecialist);
-		
-		JRadioButton rdbtnNewRadioButton = new JRadioButton("Cardiology");
-		rdbtnNewRadioButton.setFont(new Font("Tahoma", Font.PLAIN, 13));
-		rdbtnNewRadioButton.setBounds(31, 244, 103, 21);
-		panel.add(rdbtnNewRadioButton);
-        
-        JRadioButton rdbtnEndocrinology = new JRadioButton("Endocrinology");
-		rdbtnEndocrinology.setFont(new Font("Tahoma", Font.PLAIN, 13));
-		rdbtnEndocrinology.setBounds(174, 244, 112, 21);
-		panel.add(rdbtnEndocrinology);
-		
-		JRadioButton rdbtnGastroenterology = new JRadioButton("Gastroenterology");
-		rdbtnGastroenterology.setFont(new Font("Tahoma", Font.PLAIN, 13));
-		rdbtnGastroenterology.setBounds(340, 244, 130, 21);
-		panel.add(rdbtnGastroenterology);
-		
-		JRadioButton rdbtnHematology = new JRadioButton("Hematology");
-		rdbtnHematology.setFont(new Font("Tahoma", Font.PLAIN, 13));
-		rdbtnHematology.setBounds(491, 244, 103, 21);
-		panel.add(rdbtnHematology);
-		
-		JRadioButton rdbtnInfectiousDiseases = new JRadioButton("Infectious Diseases");
-		rdbtnInfectiousDiseases.setFont(new Font("Tahoma", Font.PLAIN, 13));
-		rdbtnInfectiousDiseases.setBounds(33, 267, 140, 21);
-		panel.add(rdbtnInfectiousDiseases);
-        
-        JRadioButton rdbtnNephrology = new JRadioButton("Nephrology");
-		rdbtnNephrology.setFont(new Font("Tahoma", Font.PLAIN, 13));
-		rdbtnNephrology.setBounds(174, 267, 103, 21);
-		panel.add(rdbtnNephrology);
-		
-		JRadioButton rdbtnOncology = new JRadioButton("Oncology");
-		rdbtnOncology.setFont(new Font("Tahoma", Font.PLAIN, 13));
-		rdbtnOncology.setBounds(340, 267, 103, 21);
-		panel.add(rdbtnOncology);
-		
-		JRadioButton rdbtnPulmonology = new JRadioButton("Pulmonology");
-		rdbtnPulmonology.setFont(new Font("Tahoma", Font.PLAIN, 13));
-		rdbtnPulmonology.setBounds(491, 267, 103, 21);
-		panel.add(rdbtnPulmonology);
-		
-		JRadioButton rdbtnRheumatology = new JRadioButton("Rheumatology");
-		rdbtnRheumatology.setFont(new Font("Tahoma", Font.PLAIN, 13));
-		rdbtnRheumatology.setBounds(33, 290, 117, 21);
-		panel.add(rdbtnRheumatology);
-        
-        JRadioButton rdbtnCriticalCareMedicine = new JRadioButton("Critical Care Medicine");
-		rdbtnCriticalCareMedicine.setFont(new Font("Tahoma", Font.PLAIN, 13));
-		rdbtnCriticalCareMedicine.setBounds(174, 290, 154, 21);
-		panel.add(rdbtnCriticalCareMedicine);
-		
-		JRadioButton rdbtnGeriatricMedicine = new JRadioButton("Geriatric Medicine");
-		rdbtnGeriatricMedicine.setFont(new Font("Tahoma", Font.PLAIN, 13));
-		rdbtnGeriatricMedicine.setBounds(340, 290, 132, 21);
-		panel.add(rdbtnGeriatricMedicine);
-		
-		JRadioButton rdbtnAllergyAndImmunology = new JRadioButton("Immunology");
-		rdbtnAllergyAndImmunology.setFont(new Font("Tahoma", Font.PLAIN, 13));
-		rdbtnAllergyAndImmunology.setBounds(491, 290, 101, 21);
-		panel.add(rdbtnAllergyAndImmunology);
-		 
-	    ButtonGroup specialistGroup = new ButtonGroup();
-	    specialistGroup.add(rdbtnNewRadioButton);
-	    specialistGroup.add(rdbtnEndocrinology);
-	    specialistGroup.add(rdbtnGastroenterology);
-	    specialistGroup.add(rdbtnHematology);
-	    specialistGroup.add(rdbtnInfectiousDiseases);
-	    specialistGroup.add(rdbtnNephrology);
-	    specialistGroup.add(rdbtnOncology);
-	    specialistGroup.add(rdbtnPulmonology);
-	    specialistGroup.add(rdbtnRheumatology);
-	    specialistGroup.add(rdbtnCriticalCareMedicine);
-	    specialistGroup.add(rdbtnGeriatricMedicine);
-	    specialistGroup.add(rdbtnAllergyAndImmunology);
 	    
 	    JLabel Physical_Examination = new JLabel("Physical Examination");
 		Physical_Examination.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		Physical_Examination.setBounds(35, 451, 143, 19);
 		panel.add(Physical_Examination);
 		
-		JTextArea txtPhysicalExm = new JTextArea();
+		txtPhysicalExm = new JTextArea();
 		txtPhysicalExm.setBounds(37, 480, 557, 58);
 		panel.add(txtPhysicalExm);
 		
 		JButton btnNext = new JButton("Next");
 		btnNext.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				actionPerformed(evt);
+				nextActionPerformed();
 			}
 		});
 		btnNext.setBounds(509, 572, 85, 21);
 		panel.add(btnNext);
-		
-		cbPatientID = new JComboBox();
-		cbPatientID.setBounds(33, 175, 134, 32);
-		cbPatientID.addItemListener(new ItemListener() {
-		    @Override
-		    public void itemStateChanged(ItemEvent e) {
-		        if (e.getStateChange() == ItemEvent.SELECTED) {
-		            Patient selectedPatient = (Patient) e.getItem();
-		            String patientName = selectedPatient.getName();
-		            txtPatient.setText(patientName);
-		        }
-		    }
-		});
-		panel.add(cbPatientID);
 	}
 	
-	public void actionPerformed(ActionEvent evt) {
-		CreateClinicalSummary2.createAndShowGUI(username, patientName, CSID);
+	public void nextActionPerformed() {
+		Encrypter encypt = new Encrypter();
+		String encryptedIC = encypt.encrypter(cbPatientID.getSelectedItem().toString());
+		
+		List<String> record = new ArrayList<String>();
+		record.add(encryptedIC);
+		record.add(txtPatient.getText());
+		record.add(CSID);
+		record.add(specialistDropdown.getSelectedItem().toString());
+		record.add(txtDTVisit.getText());
+		record.add(txtDoc.getText());
+		record.add(txtHistory.getText());
+		record.add(txtPhysicalExm.getText());
+		CreateClinicalSummary2.createAndShowGUI(username, record);
+		frame.dispose();
 	}
 }

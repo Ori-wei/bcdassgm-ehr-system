@@ -48,7 +48,7 @@ public class HospitalDetails {
 		initialize();
 		int rowCount;
 		String hospitalID = null;
-		try (Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
+		try (Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
 	             Statement stmt = conn.createStatement();
 	             ResultSet rs = stmt.executeQuery("SELECT * from BCD.hospital")) {
 	        	
@@ -150,7 +150,7 @@ public class HospitalDetails {
 				String contactNumber = tfContactNumber.getText();
 				int affectedRows;
 				try {
-					Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
+					Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
 					Statement stmt = conn.createStatement();
 					affectedRows = stmt.executeUpdate("INSERT INTO BCD.hospital (hospitalID, name, address, contact)  "
                     		+ "VALUES ('" + hospitalID + "','" + name + "','" + address + "','" + contactNumber + "')");
