@@ -78,7 +78,7 @@ public class CreateClinicalSummary2 {
         JButton btnBack = new JButton("Back");
         btnBack.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
-        		CreateClinicalSummary1.createAndShowGUI(username);
+        		CreateClinicalSummary1.createAndShowGUI(username, record);
         		frame.dispose();
         	}
         });

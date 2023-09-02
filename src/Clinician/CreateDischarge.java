@@ -12,8 +12,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -22,26 +27,32 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import BlockchainObject.ClinicalSummary;
 import DatabaseObject.Patient;
 import SymmetricEncryption.Decrypter;
+import SymmetricEncryption.Encrypter;
+import ehrBlockchain.Block;
+import ehrBlockchain.Blockchain;
+import ehrBlockchain.RecordCollection;
 
 public class CreateDischarge {
 
     private JFrame frame;
     private JTextField datetimeDischargeField;
     private JTextField txtPatient;
-    private JComboBox<Object> patientDropdownDischarge;
+    public String CSID;
     public String patientID;
     public String patientName;
     private Timestamp pytimestamp;
     private String statusAtDischarge;
     public String admissionID;
+    private JTextField txtPatientIC;
 
-    public static void createAndShowGUI(String admissionID) {
+    public static void createAndShowGUI(String CSID, String patientID) {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
-                    CreateDischarge window = new CreateDischarge(admissionID);
+                    CreateDischarge window = new CreateDischarge(CSID, patientID);
                     window.frame.setVisible(true);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -50,39 +61,44 @@ public class CreateDischarge {
         });
     }
 
-    public CreateDischarge(String admissionID) {
+    public CreateDischarge(String CSID, String patientID) {
         initialize();
+        this.CSID = CSID;
+        this.patientID = patientID;
         
-      //Populate PatientID dropdown
-        List<Patient> patientList = new ArrayList<>();
+        
+        // decrypt IC, populate IC
+        Decrypter decrypt = new Decrypter();
+		String decryptedIC = decrypt.decrypter(patientID);
+		txtPatientIC.setText(decryptedIC);
+        
+        // Populate Name
         try {
 	    	Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
 	        Statement stmt = conn.createStatement();
-	        ResultSet rs = stmt.executeQuery("SELECT * from BCD.patient");
+	        ResultSet rs = stmt.executeQuery("SELECT * from BCD.patient where patientID = " + patientID);
             while (rs.next()) {
-            	//decrypt it!
-				Decrypter decypt = new Decrypter();
-            	String decryptedIC = decypt.decrypter(rs.getString("IC_No"));
-            	System.out.println("Original Content: " + decryptedIC);
-            	Patient patient = new Patient(decryptedIC, rs.getString("name"));
-                patientList.add(patient);
+            	txtPatient.setText(rs.getString("name"));
             }
         } catch (SQLException e1) {
             e1.printStackTrace();
         }
-        try {
-            for (Patient patient : patientList) {
-            	patientID = patient.getPatientID();
-            	patientName = patient.getName();   
-            	patientDropdownDischarge.addItem(patient);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
         
-     // Populate DateTime of Visit
+        // Populate DateTime of Visit
         pytimestamp = new Timestamp(System.currentTimeMillis());
         datetimeDischargeField.setText(pytimestamp.toString());
+        
+        // Populate Admission iD
+        try {
+	    	Connection conn1 = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+	        Statement stmt1 = conn1.createStatement();
+	        ResultSet rs1 = stmt1.executeQuery("SELECT * from BCD.Admission where CSID = " + CSID);
+            while (rs1.next()) {
+            	admissionID = rs1.getString("admissionID");
+            }
+        } catch (SQLException e1) {
+            e1.printStackTrace();
+        }
     }
 
     private void initialize() {
@@ -121,20 +137,11 @@ public class CreateDischarge {
         lblPatientIc.setBounds(34, 169, 100, 25);
         panel.add(lblPatientIc);
         
-        patientDropdownDischarge = new JComboBox<>();
-        patientDropdownDischarge.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        patientDropdownDischarge.setBounds(257, 169, 190, 25);
-        patientDropdownDischarge.addItemListener(new ItemListener() {
-		    @Override
-		    public void itemStateChanged(ItemEvent e) {
-		        if (e.getStateChange() == ItemEvent.SELECTED) {
-		            Patient selectedPatient = (Patient) e.getItem();
-		            String patientName = selectedPatient.getName();
-		            txtPatient.setText(patientName);
-		        }
-		    }
-		});
-        panel.add(patientDropdownDischarge);
+        txtPatientIC = new JTextField();
+        txtPatientIC.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        txtPatientIC.setEnabled(false);
+        txtPatientIC.setBounds(257, 174, 190, 25);
+        panel.add(txtPatientIC);
 
         JLabel patientLabelDischarge = new JLabel("Patient Name:");
         patientLabelDischarge.setFont(new Font("Tahoma", Font.PLAIN, 15));
@@ -187,10 +194,11 @@ public class CreateDischarge {
     }
     
     public void updateAction(String admissionID) {
-    	this.admissionID = admissionID;
     	String dtAdmission = null;
-    	String CSID = null;
-    	
+    	String recordInfo = null;
+        final String masterFolder = "masterEHR";
+        final String fileName = masterFolder + "/chain.bin";
+        
     	// Step 1: Update Admission DB
     	try {
     		Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
@@ -205,14 +213,40 @@ public class CreateDischarge {
             	ResultSet rs2 = stmt.executeQuery(query2);
             	while (rs2.next()) {
                     dtAdmission = rs2.getString("datetimeOfAdmission");
-                    CSID = rs2.getString("CSID");
                 }
             }
             
         	// Step 3: Retrieve record from blockchain
-        	
+            List<ClinicalSummary> clinicalSummaryList = new ArrayList<>();
+       		// Read the blockchain
+    		Blockchain bc = new Blockchain(fileName);
+    	    LinkedList<Block> EHRchain = bc.readBlockchain(fileName); // Make sure to provide the correct file name
+    	    // Create a map to keep track of latest ClinicalSummary by CSID
+    	    Map<String, ClinicalSummary> latestClinicalSummaries = new HashMap<>();
+    	    
+    	    // Filter and add records to the list
+    	    for (Block block : EHRchain) {
+    	        RecordCollection recordCollection = block.getEhrContainer(); // Assuming getEhrContainer returns a RecordCollection
+    	        for (String record : recordCollection) { // Assuming RecordCollection is an Iterable
+    	            // You would typically deserialize or parse the record to check the ID.
+    	        	String[] components = record.split("\\|");
+    	            String id = components[0]; 
+    	            System.out.println(id);
+    	            String IC = components[1];
+    	            String date = components[2]; 
+    	            System.out.println("Comparing patientIC: " + patientID + " with IC: " + IC);
+    	            if (patientID.equals(IC)) {
+    	            	    if (CSID.equals(id)) {
+    	                        System.out.println("Comparing CSID: " + CSID + " with id: " + id);
+    		                    recordInfo=record;
+    	                    
+    		                }
+    	            	}  	   
+    	            }
+    	        }
         	// Step 4: Concat both string
-        	
+    	    
+            
         	// Step 5: Insert new record into blockchain
     	}catch(Exception e) {
     		e.printStackTrace();
