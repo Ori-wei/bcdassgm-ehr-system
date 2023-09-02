@@ -2,9 +2,10 @@ package ehrBlockchain;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
-public class RecordCollection implements Serializable{
+public class RecordCollection implements Serializable, Iterable<String>{
 	private static final long serialVersionUID = 1L;
 	private int size = 0;
 	private final int maxSize = 4;
@@ -52,6 +53,12 @@ public class RecordCollection implements Serializable{
 	@Override
 	public String toString() {
 		return "RecordCollection [size=" + size + ", merkleRoot=" + merkleRoot + ", ehrList=" + ehrList	+ "]";
+	}
+
+	@Override
+	public Iterator<String> iterator() {
+		// TODO Auto-generated method stub
+		return ehrList.iterator();
 	}
 
 	

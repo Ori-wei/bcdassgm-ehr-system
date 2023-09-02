@@ -69,4 +69,9 @@ public class Blockchain implements Serializable {
 		String chain = new GsonBuilder().setPrettyPrinting().create().toJson(EHRchain);
 		System.out.println(chain);
 	}
+	
+	public LinkedList<Block> readBlockchain(String fileName) {
+	    Blockchain EHRchain = Blockchain.get_instance(fileName);
+	    return EHRchain.get();
+	}
 }
