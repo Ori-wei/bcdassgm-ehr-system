@@ -51,7 +51,7 @@ public class CreateDischarge {
     public String patientID;
     public String patientName;
     private Timestamp dischargetimestamp;
-    private String statusAtDischarge;    
+    private String statusAtDischarge = "Alive";    
     private JTextField txtPatientIC;
     private JTextField txtSignature;
     private String finalCSRecord = null;
@@ -274,8 +274,8 @@ public class CreateDischarge {
     	            	// Step 2: Update Database
     	        	    Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
     	                Statement stmt = conn.createStatement();
-    	                String query = "UPDATE BCD.Admission SET DATETIMEOFDISCHARGE = " + dischargetimestamp + ","
-    	                		+ " STATUSATDISCHARGE = " + statusAtDischarge + " WHERE ADMISSIONID = " + admissionID;
+    	                String query = "UPDATE BCD.Admission SET DATETIMEOFDISCHARGE = '" + dischargetimestamp + "',"
+    	                		+ " STATUSATDISCHARGE = '" + statusAtDischarge + "' WHERE ADMISSIONID = '" + admissionID + "'";
     	                int rs = stmt.executeUpdate(query);
 
     	            	// Step 3: Replace old blockchain record with a new one

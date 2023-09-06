@@ -300,6 +300,8 @@ public class CreateClinicalSummary1 {
         
         txtDoc = new JTextField();
         txtDoc.setBounds(451, 270, 143, 32);
+        txtDoc.setEditable(false);
+        txtDoc.setText(username);
 		panel.add(txtDoc);
 		txtDoc.setColumns(10);
 		
