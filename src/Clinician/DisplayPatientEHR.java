@@ -7,6 +7,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JLabel;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -14,6 +16,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -45,15 +49,20 @@ public class DisplayPatientEHR {
 	private JTextField tfPatientName;
 	private JTextField tfSex;
 	private JTable jtable1;
+	
+	String patientIC = null;
+	String username = null;
+	String CSID = null;
+	String datetime = null;
 
 	/**
 	 * Launch the application.
 	 */
-	public static void createAndShowGUI() {
+	public static void createAndShowGUI(String username, String patientIC) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					DisplayPatientEHR window = new DisplayPatientEHR();
+					DisplayPatientEHR window = new DisplayPatientEHR(username, patientIC);
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -66,13 +75,13 @@ public class DisplayPatientEHR {
 	 * Create the application.
 	 * @throws ParseException 
 	 */
-	public DisplayPatientEHR() throws ParseException {
+	public DisplayPatientEHR(String username, String patientIC) throws ParseException {
 		initialize();
-		String patientIC="BD/5lZqGUxOQcYEnbMrrMg==";
+		this.username=username;
+		this.patientIC=patientIC;
 		String decrpytedPatientIC;
 		String patientName;
 		String sex;
-		String CSID = "CS0001";
 		//from the PatientID (IC_No) gotten, retrieve name and sex from database
 		List<Patient> patientList = new ArrayList<>();
 		try {
@@ -123,32 +132,36 @@ public class DisplayPatientEHR {
 	            String id = components[0]; 
 	            System.out.println(id);
 	            String IC = components[1];
-	            String date = components[12]; 
+	            String timestamp = components[15]; 
 	            String admissionID = components[11];
-	            String statusAtDischarge = components[16];
+	            String statusAtDischarge = components[14];
 	            System.out.println("Comparing patientIC: " + patientIC + " with IC: " + IC);
 	            if (patientIC.equals(IC)) {
 	                ClinicalSummary existingSummary = latestClinicalSummaries.get(id);
-	                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	                Date recordDate = sdf.parse(date);
+	                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+	                LocalDateTime recordTimestamp = LocalDateTime.parse(timestamp, formatter);
+	                
+	                //SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+	                //Date recordDate = sdf.parse(date);
 
 	                // This part ensures that only the latest date for this CSID remains in the map
 	                if (existingSummary == null) {
 	                	//System.out.println("Comparing old date: " + sdf.parse(existingSummary.getDate() + " with new date: " + recordDate));
-	                	System.out.println(" with new date: " + recordDate);
-	                    ClinicalSummary clinicalSummary = new ClinicalSummary(id, date, admissionID, statusAtDischarge);
+	                	System.out.println(" with new date: " + recordTimestamp);
+	                    ClinicalSummary clinicalSummary = new ClinicalSummary(id, timestamp, admissionID, statusAtDischarge);
 	                    latestClinicalSummaries.put(id, clinicalSummary);  
-	                    System.out.println(recordDate);
+	                    System.out.println(recordTimestamp);
 	                }
 	                if (existingSummary != null) {
 	                	System.out.println("record exist");
-	                	if(sdf.parse(existingSummary.getDate()).before(recordDate))
+	                	LocalDateTime existingRecordTimeStamp = LocalDateTime.parse(existingSummary.getTimestamp(), formatter);
+	                	if(existingRecordTimeStamp.isBefore(recordTimestamp))
 	                	{
 	                		//System.out.println("Comparing old date: " + sdf.parse(existingSummary.getDate() + " with new date: " + recordDate));
-		                	System.out.println(" with new date: " + recordDate);
-		                    ClinicalSummary clinicalSummary = new ClinicalSummary(id, date, admissionID, statusAtDischarge);
+		                	System.out.println(" with new date: " + recordTimestamp);
+		                    ClinicalSummary clinicalSummary = new ClinicalSummary(id, timestamp, admissionID, statusAtDischarge);
 		                    latestClinicalSummaries.put(id, clinicalSummary);  
-		                    System.out.println(recordDate);
+		                    System.out.println(recordTimestamp);
 	                	}
 
 	                }
@@ -172,7 +185,7 @@ public class DisplayPatientEHR {
             for (ClinicalSummary clinicalSummary : clinicalSummaryList) {
             	//initialize things into clinicalSummary object
             	index++;
-                model.addRow(new Object[]{index, clinicalSummary.getCSID(), clinicalSummary.getAdmissionID(), clinicalSummary.getStatusAtDischarge(), clinicalSummary.getDate()});     
+                model.addRow(new Object[]{index, clinicalSummary.getCSID(), clinicalSummary.getAdmissionID(), clinicalSummary.getStatusAtDischarge(), clinicalSummary.getTimestamp()});     
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -243,6 +256,12 @@ public class DisplayPatientEHR {
 		btnNext.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		btnNext.setBounds(497, 396, 101, 33);
 		panel.add(btnNext);
+		btnNext.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        		ViewClinicalSummary1.createAndShowGUI(username, CSID, datetime);
+        		frame.dispose();
+        	}
+        });
 		
 		JButton btnCreateDischarge = new JButton("Create Discharge");
 		btnCreateDischarge.setEnabled(false);
@@ -263,18 +282,18 @@ public class DisplayPatientEHR {
 	                    Object selectedCSID = jtable1.getValueAt(selectedRow, 1); // 1 for the 2nd column
 	                    Object selectedAdmissionID = jtable1.getValueAt(selectedRow, 2); // 2 for the 3rd column
 	                    Object selectedStatusAtDischarge = jtable1.getValueAt(selectedRow, 3); // 2 for the 3rd column
-	                    Object selectedDate = jtable1.getValueAt(selectedRow, 4); // 3 for the 4th column
+	                    Object selectedDateTime = jtable1.getValueAt(selectedRow, 4); // 3 for the 4th column
 	                    
-	                    String CSID = (String) selectedCSID;
+	                    CSID = (String) selectedCSID;
 	                    String admissionID = (String) selectedAdmissionID;
 	                    String statusAtDischarge = (String) selectedStatusAtDischarge;
-	                    String date = (String) selectedDate;
+	                    datetime = (String) selectedDateTime;
 	                    
 	                    // Now you can use these selected values
 	                    System.out.println("Selected CSID: " + selectedCSID);
 	                    System.out.println("Selected AdmissionID: " + selectedAdmissionID);
 	                    System.out.println("Selected Status at Discharge: " + selectedStatusAtDischarge);
-	                    System.out.println("Selected Date: " + selectedDate);
+	                    System.out.println("Selected Date: " + selectedDateTime);
 	                    
 	                    // If you want to enable a button upon row selection:
 	                    if(!admissionID.equals("NA") && statusAtDischarge.equals("NA"))
