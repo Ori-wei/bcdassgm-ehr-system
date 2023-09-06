@@ -259,7 +259,7 @@ public class CreateClinicalSummary1 {
 		panel.add(txtPatient);
 		txtPatient.setColumns(10);
 		
-		JLabel lblNewLabel_3 = new JLabel("Report ID:");
+		JLabel lblNewLabel_3 = new JLabel("CSID:");
 		lblNewLabel_3.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		lblNewLabel_3.setBounds(451, 149, 101, 13);
 		panel.add(lblNewLabel_3);

@@ -49,6 +49,8 @@ public class CreateClinicalSummary3 {
 	private String admissionID = "";
 	private JButton btnNext;
 	private String CSRecord = null;
+	private String finalCSRecord = null;
+	private byte[] signature = null;
 	private String hashRecord = null;
 	private String hospitalID = null;
 	private String clinicianID = null;
@@ -341,19 +343,18 @@ public class CreateClinicalSummary3 {
 	    	txtDesignation.setText(designation);
 	    	txtDepartment.setText(department);
 	    	txtDatetime.setText(dtSign);
-	    	Timestamp timestampNow = new Timestamp(System.currentTimeMillis());
 	    	
-	    	// Step 2: Finalize CSRecord String
+	    	// Step 2: Complete the 1st version CSRecord String
 	    	if (admissionID.isEmpty()) {
 	    		CSRecord = record.get(2) + "|" + record.get(0) + "|" + record.get(3) + "|" + record.get(4) +
 		        		"|" + record.get(5) + "|" + record.get(6) + "|" + record.get(7) + "|" + record.get(8) +
 		        		"|" + record.get(9) + "|" + record.get(10) + "|" + record.get(11) + "|" + "NA" +
-		        		"|" + timestampNow + "|" + "NA" + "|" + "NA" + "|" + "NA";
+		        		"|" + "NA" + "|" + "NA" + "|" + "NA";
 	    	}else {
 	    		CSRecord = record.get(2) + "|" + record.get(0) + "|" + record.get(3) + "|" + record.get(4) +
 		        		"|" + record.get(5) + "|" + record.get(6) + "|" + record.get(7) + "|" + record.get(8) +
 		        		"|" + record.get(9) + "|" + record.get(10) + "|" + record.get(11) + "|" + record.get(12) +
-		        		"|" + timestampNow + "|" + "NA" + "|" + "NA" + "|" + "NA";
+		        		"|" + admissionTimestamp + "|" + "NA" + "|" + "NA";
 	    	}
 	        
 	        System.out.println(CSRecord);
@@ -375,7 +376,7 @@ public class CreateClinicalSummary3 {
         if (privateKey != null) {
         	// step 4: set digital signature
         	UserSignature userSignature = new UserSignature();
-        	byte[] signature = userSignature.getSignature(hashRecord, privateKey);
+        	signature = userSignature.getSignature(hashRecord, privateKey);
         	txtSignature.setText(signature.toString());
         }
         
@@ -386,16 +387,25 @@ public class CreateClinicalSummary3 {
 		rdbtnNo.setEnabled(false);
 		btnSign.setEnabled(false);
 		
-		// step 6: add to blockchain
+		// step 6: add timestamp and signature to CSRecord
+		Timestamp timestampNow = new Timestamp(System.currentTimeMillis());
+		finalCSRecord = CSRecord + "|" + timestampNow + "|" + signature;
+		System.out.println(finalCSRecord);
+		
+		// step 7: add to blockchain
         final String masterFolder = "masterEHR";
 		final String fileName = masterFolder + "/chain.bin";
 		
 		// add Record to list
 		RecordCollection accumulatedRecords = RecordHandler.deserializeRecords();
-		accumulatedRecords.add(CSRecord);
+		accumulatedRecords.add(finalCSRecord);
+		System.out.println(accumulatedRecords);
 		
 		// if 4records are accumulated, access blockchain
+		System.out.println(accumulatedRecords.getEhrList().size());
+		
 		if (accumulatedRecords.getEhrList().size() == 4) {
+			
 	        Blockchain EHRchain = Blockchain.get_instance(fileName);
 
 	        if (!new File(masterFolder).exists()) {

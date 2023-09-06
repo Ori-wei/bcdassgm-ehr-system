@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
+import java.security.PrivateKey;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -26,10 +27,15 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+
+import org.mindrot.jbcrypt.BCrypt;
+
 import BlockchainObject.ClinicalSummary;
 import DatabaseObject.Patient;
+import DigitalSignature.UserSignature;
 import SymmetricEncryption.Decrypter;
 import SymmetricEncryption.Encrypter;
+import asymmetric.AccessKey;
 import ehrBlockchain.Block;
 import ehrBlockchain.Blockchain;
 import ehrBlockchain.RecordCollection;
@@ -37,6 +43,7 @@ import ehrBlockchain.RecordHandler;
 
 public class CreateDischarge {
 
+	public String username;
     private JFrame frame;
     private JTextField datetimeDischargeField;
     private JTextField txtPatient;
@@ -44,15 +51,21 @@ public class CreateDischarge {
     public String patientID;
     public String patientName;
     private Timestamp dischargetimestamp;
-    private String statusAtDischarge;
-    public String admissionID;
+    private String statusAtDischarge;    
     private JTextField txtPatientIC;
+    private JTextField txtSignature;
+    private String finalCSRecord = null;
+    private JButton btnNext;
+    private JButton btnBack;
+    private JButton btnSign;
+    private String hashRecord = null;
+    private byte[] signature = null;
 
-    public static void createAndShowGUI(String CSID, String patientID) {
+    public static void createAndShowGUI(String CSID, String patientID, String username) {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
-                    CreateDischarge window = new CreateDischarge(CSID, patientID);
+                    CreateDischarge window = new CreateDischarge(CSID, patientID, username);
                     window.frame.setVisible(true);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -61,11 +74,11 @@ public class CreateDischarge {
         });
     }
 
-    public CreateDischarge(String CSID, String patientID) {
+    public CreateDischarge(String CSID, String patientID, String username) {
         initialize();
         this.CSID = CSID;
         this.patientID = patientID;
-        
+        this.username = username;
         
         // decrypt IC, populate IC
         Decrypter decrypt = new Decrypter();
@@ -76,9 +89,10 @@ public class CreateDischarge {
         try {
 	    	Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
 	        Statement stmt = conn.createStatement();
-	        ResultSet rs = stmt.executeQuery("SELECT * from BCD.patient where patientID = " + patientID);
+	        ResultSet rs = stmt.executeQuery("SELECT * from BCD.patient");
             while (rs.next()) {
-            	txtPatient.setText(rs.getString("name"));
+            	Patient patient = new Patient(decryptedIC, rs.getString("name"));
+            	txtPatient.setText(patient.getName());
             }
         } catch (SQLException e1) {
             e1.printStackTrace();
@@ -87,18 +101,6 @@ public class CreateDischarge {
         // Populate DateTime of Visit
         dischargetimestamp = new Timestamp(System.currentTimeMillis());
         datetimeDischargeField.setText(dischargetimestamp.toString());
-        
-        // Populate Admission iD
-        try {
-	    	Connection conn1 = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
-	        Statement stmt1 = conn1.createStatement();
-	        ResultSet rs1 = stmt1.executeQuery("SELECT * from BCD.Admission where CSID = " + CSID);
-            while (rs1.next()) {
-            	admissionID = rs1.getString("admissionID");
-            }
-        } catch (SQLException e1) {
-            e1.printStackTrace();
-        }
     }
 
     private void initialize() {
@@ -122,13 +124,13 @@ public class CreateDischarge {
         lblNewLabel_1.setFont(new Font("Tahoma", Font.PLAIN, 20));
         panel.add(lblNewLabel_1);
 
-        JButton btnBack = new JButton("Back");
+        btnBack = new JButton("Back");
         btnBack.setFont(new Font("Tahoma", Font.PLAIN, 15));
         btnBack.setBounds(33, 10, 85, 21);
         panel.add(btnBack);
         btnBack.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                //CreateClinicalSummary3.createAndShowGUI(username, patientName, CSID);
+            	Menu.createAndShowGUI(username);
             }
         });
         
@@ -182,41 +184,58 @@ public class CreateDischarge {
         });
         panel.add(statusDropdown);
         
-        JButton btnUpdate = new JButton("Update");
-        btnUpdate.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        btnUpdate.setBounds(257, 379, 85, 21);
-        btnUpdate.addActionListener(new ActionListener() {
+        JLabel lblSignature = new JLabel("Signature:");
+        lblSignature.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        lblSignature.setBounds(33, 379, 200, 25);
+        panel.add(lblSignature);
+        
+        txtSignature = new JTextField();
+        txtSignature.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        txtSignature.setEnabled(false);
+        txtSignature.setBounds(257, 384, 190, 25);
+        panel.add(txtSignature);
+        
+        btnSign = new JButton("Sign");
+        btnSign.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        btnSign.setBounds(257, 443, 85, 21);
+        btnSign.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                updateAction(admissionID);
+                signAction();
             }
         });
-        panel.add(btnUpdate);
+        panel.add(btnSign);
+        
+        btnNext = new JButton("Next");
+        btnNext.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        btnNext.setBounds(505, 519, 85, 21);
+        btnNext.setEnabled(false);
+        btnNext.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                Menu.createAndShowGUI(username);
+            }
+        });
+        panel.add(btnNext);
     }
     
-    public void updateAction(String admissionID) {
-    	String dtAdmission = null;
-    	String recordInfo = null;
+    public void signAction() {
+    	String id = null;
+    	String IC = null;
+    	String areaOfSpecialist = null;
+    	String dateOfVisit = null;
+        String doctorName = null;
+        String history = null;
+        String physicalExamination = null;
+        String diagnosis = null;
+        String summary = null;
+        String treatment = null;
+        String followUpProgress = null;
+        String admissionID = null;
+        String dateTimeOfAdmission = null;
         final String masterFolder = "masterEHR";
         final String fileName = masterFolder + "/chain.bin";
         
-    	// Step 1: Update Admission DB
-    	try {
-    		Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
-            Statement stmt = conn.createStatement();
-            String query = "UPDATE BCD.Admission SET DATETIMEOFDISCHARGE = " + dischargetimestamp + ","
-            		+ " STATUSATDISCHARGE = " + statusAtDischarge + " WHERE ADMISSIONID = " + admissionID;
-            int rs = stmt.executeUpdate(query);
-            
-            if (rs > 0) {
-            	// Step 2: Select the record, retrieve data
-            	String query2 = "SELECT * FROM BCD.Admission WHERE ADMISSIONID = " + admissionID;
-            	ResultSet rs2 = stmt.executeQuery(query2);
-            	while (rs2.next()) {
-                    dtAdmission = rs2.getString("datetimeOfAdmission");
-                }
-            }
-            
-        	// Step 3: Retrieve record from blockchain
+    	try {    
+        	// Step 1: Retrieve record from blockchain
             List<ClinicalSummary> clinicalSummaryList = new ArrayList<>();
        		// Read the blockchain
     		Blockchain bc = new Blockchain(fileName);
@@ -230,59 +249,109 @@ public class CreateDischarge {
     	        for (String record : recordCollection) { // Assuming RecordCollection is an Iterable
     	            // You would typically deserialize or parse the record to check the ID.
     	        	String[] components = record.split("\\|");
-    	            String id = components[0]; 
+    	            id = components[0];
+    	            IC = components[1];
+    	            areaOfSpecialist = components[2];
+    	            dateOfVisit = components[3];
+    	            doctorName = components[4];
+    	            history = components[5];
+    	            physicalExamination = components[6];
+    	            diagnosis = components[7];
+    	            summary = components[8];
+    	            treatment = components[9];
+    	            followUpProgress = components[10];
+    	            admissionID = components[11];
+    	            dateTimeOfAdmission = components[12];
+    	            
+    	            System.out.println(IC);
     	            System.out.println(id);
-    	            String IC = components[1];
-    	            String date = components[2]; 
+    	            
     	            System.out.println("Comparing patientIC: " + patientID + " with IC: " + IC);
-    	            if (patientID.equals(IC)) {
-    	            	    if (CSID.equals(id)) {
-    	                        System.out.println("Comparing CSID: " + CSID + " with id: " + id);
-    		                    recordInfo=record;
-    	                    
-    		                }
-    	            	}  	   
+                    System.out.println("Comparing CSID: " + CSID + " with id: " + id);
+    	            if (patientID.equals(IC) && CSID.equals(id)) {
+    	            	System.out.println("IC and ID matched! proceeding further..");
+    	            	
+    	            	// Step 2: Update Database
+    	        	    Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+    	                Statement stmt = conn.createStatement();
+    	                String query = "UPDATE BCD.Admission SET DATETIMEOFDISCHARGE = " + dischargetimestamp + ","
+    	                		+ " STATUSATDISCHARGE = " + statusAtDischarge + " WHERE ADMISSIONID = " + admissionID;
+    	                int rs = stmt.executeUpdate(query);
+
+    	            	// Step 3: Replace old blockchain record with a new one
+    	                String updatedCSRecord = id + "|" + IC + "|" + areaOfSpecialist + "|" + dateOfVisit + "|" + doctorName + "|"
+    	                		+ history + "|" + physicalExamination + "|" + diagnosis + "|" + summary + "|" + treatment + "|"
+    	                		+ followUpProgress + "|" + admissionID + "|" + dateTimeOfAdmission + "|" + dischargetimestamp + "|"
+    	                		+ statusAtDischarge;
+    	                
+    	                // Step 4: Hash the string
+    	                String salt = BCrypt.gensalt();
+    	    	        hashRecord = BCrypt.hashpw(updatedCSRecord, salt);
+    	    	        
+    	    	        // Step 5: Encrypt the hash with private key
+    	    	        PrivateKey privateKey = null;
+    	    	        try {
+    	    	            privateKey = AccessKey.getPrivateKey("KeyManagement/" + username + "/AsymmetricKeyPair/PrivateKey");
+    	    	        } catch (Exception e1) {
+    	    	            e1.printStackTrace();
+    	    	        }
+    	    	        if (privateKey != null) {
+    	    	        	// step 4: set digital signature
+    	    	        	UserSignature userSignature = new UserSignature();
+    	    	        	signature = userSignature.getSignature(hashRecord, privateKey);
+    	    	        	txtSignature.setText(signature.toString());
+    	    	        }
+    	        	    
+    	    	        // Step 6: generate timestamp
+    	    	        Timestamp timestampNow = new Timestamp(System.currentTimeMillis());
+    	    	        
+    	    	        // Step 7: add timestamp and signature to record
+    	    			finalCSRecord = updatedCSRecord + "|" + timestampNow + "|" + signature;
+    	        	    
+    	            	// Step 8: Insert new record into blockchain
+    	        	    final String masterFolder1 = "masterEHR";
+    	        		final String fileName1 = masterFolder + "/chain.bin";
+    	        		
+    	        		// add Record to list
+    	        		RecordCollection accumulatedRecords = RecordHandler.deserializeRecords();
+    	        		accumulatedRecords.add(finalCSRecord);
+    	        		
+    	        		// if 4records are accumulated, access blockchain
+    	        		if (accumulatedRecords.getEhrList().size() == 4) {
+    	        	        Blockchain EHRchain1 = Blockchain.get_instance(fileName1);
+
+    	        	        if (!new File(masterFolder1).exists()) {
+    	        	            System.err.println("> creating Blockchain binary !");
+    	        	            new File(masterFolder1).mkdir();
+    	        	            
+    	        	            // create genesis block
+    	        	            EHRchain1.genesis();
+    	        	            EHRchain1.distribute();
+    	        	        }
+    	        	        
+    	        	        // create block
+    	        	        String previousHash = EHRchain1.get().getLast().getHeader().getCurrentHash();
+    	        	        Block b1 = new Block(previousHash);
+    	        	        b1.setEhrContainer(accumulatedRecords); // Assuming setEhrContainer accepts RecordCollection
+    	        	        System.out.println(b1);
+
+    	        	        EHRchain1.nextBlock(b1);
+    	        	        EHRchain1.distribute();
+
+    	        	        // Clear the accumulated records as they have been added to a block
+    	        	        accumulatedRecords = new RecordCollection();
+    	        	    }
+
+    	        	    // Serialize the current state of accumulated records
+    	        	    RecordHandler.serializeRecords(accumulatedRecords);
+    	        	    
+    	        	    // Step 9: Control button
+    	        	    btnNext.setEnabled(true);
+    	        	    btnSign.setEnabled(false);
+    	        	    btnBack.setEnabled(false);
     	            }
     	        }
-        	// Step 4: Concat both string
-    	    String updatedCSRecord = recordInfo + "|" + dtAdmission + "|" + dischargetimestamp + "|" + statusAtDischarge;
-            
-        	// Step 5: Insert new record into blockchain
-    	    final String masterFolder1 = "masterEHR";
-    		final String fileName1 = masterFolder + "/chain.bin";
-    		
-    		// add Record to list
-    		RecordCollection accumulatedRecords = RecordHandler.deserializeRecords();
-    		accumulatedRecords.add(updatedCSRecord);
-    		
-    		// if 4records are accumulated, access blockchain
-    		if (accumulatedRecords.getEhrList().size() == 4) {
-    	        Blockchain EHRchain1 = Blockchain.get_instance(fileName1);
-
-    	        if (!new File(masterFolder1).exists()) {
-    	            System.err.println("> creating Blockchain binary !");
-    	            new File(masterFolder1).mkdir();
-    	            
-    	            // create genesis block
-    	            EHRchain1.genesis();
-    	            EHRchain1.distribute();
-    	        }
-    	        
-    	        // create block
-    	        String previousHash = EHRchain1.get().getLast().getHeader().getCurrentHash();
-    	        Block b1 = new Block(previousHash);
-    	        b1.setEhrContainer(accumulatedRecords); // Assuming setEhrContainer accepts RecordCollection
-    	        System.out.println(b1);
-
-    	        EHRchain1.nextBlock(b1);
-    	        EHRchain1.distribute();
-
-    	        // Clear the accumulated records as they have been added to a block
-    	        accumulatedRecords = new RecordCollection();
     	    }
-
-    	    // Serialize the current state of accumulated records
-    	    RecordHandler.serializeRecords(accumulatedRecords);
     	}catch(Exception e) {
     		e.printStackTrace();
     	}  
