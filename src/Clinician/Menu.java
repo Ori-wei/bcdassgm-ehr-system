@@ -78,7 +78,7 @@ public class Menu {
         JButton btnNewButton_2 = new JButton("Search to View EHR");
         btnNewButton_2.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
-        		DisplayPatientEHR.createAndShowGUI();
+        		DisplayPatientEHR.createAndShowGUI(username, "patientIC");
         		frame.dispose();
         	}
         });
