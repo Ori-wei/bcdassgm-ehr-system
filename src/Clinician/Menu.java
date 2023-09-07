@@ -89,7 +89,7 @@ public class Menu {
         JButton btnNewButton_3 = new JButton("Create Patient");
         btnNewButton_3.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
-        		PatientCreation.createAndShowGUI();
+        		PatientCreation.createAndShowGUI(username);
         		frame.dispose();
         	}
         });

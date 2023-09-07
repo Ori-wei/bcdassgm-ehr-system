@@ -389,7 +389,7 @@ public class CreateClinicalSummary3 {
 		
 		// step 6: add timestamp and signature to CSRecord
 		Timestamp timestampNow = new Timestamp(System.currentTimeMillis());
-		finalCSRecord = CSRecord + "|" + timestampNow + "|" + signature;
+		finalCSRecord = CSRecord + "|" + timestampNow + "|" + signature.toString();
 		System.out.println(finalCSRecord);
 		
 		// step 7: add to blockchain

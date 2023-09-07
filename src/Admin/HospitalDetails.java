@@ -24,15 +24,17 @@ public class HospitalDetails {
 	private JTextField tfAddress;
 	private JTextField tfContactNumber;
 	private JTextField tfHospitalID;
+	
+	String adminID = null;
 
 	/**
 	 * Launch the application.
 	 */
-	public static void main(String[] args) {
+	public static void createAndShowGUI(String adminID) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					HospitalDetails window = new HospitalDetails();
+					HospitalDetails window = new HospitalDetails(adminID);
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -44,10 +46,11 @@ public class HospitalDetails {
 	/**
 	 * Create the application.
 	 */
-	public HospitalDetails() {
+	public HospitalDetails(String adminID) {
 		initialize();
 		int rowCount;
 		String hospitalID = null;
+		this.adminID=adminID;
 		try (Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
 	             Statement stmt = conn.createStatement();
 	             ResultSet rs = stmt.executeQuery("SELECT * from BCD.hospital")) {
@@ -158,6 +161,7 @@ public class HospitalDetails {
                     if(affectedRows==1)
                     {
                     	System.out.println("Hospital record " + hospitalID + " created.");
+                    	HospitalDetails.createAndShowGUI(adminID);
                     }
                     else
                     {
@@ -183,6 +187,15 @@ public class HospitalDetails {
 		tfHospitalID.setColumns(10);
 		tfHospitalID.setBounds(248, 155, 157, 34);
 		panel.add(tfHospitalID);
+		
+		JButton btnBack = new JButton("Back");
+		btnBack.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				MenuAdmin.createAndShowGUI(adminID);
+			}
+		});
+		btnBack.setBounds(28, 36, 85, 21);
+		panel.add(btnBack);
 	}
 
 }

@@ -35,16 +35,18 @@ public class PatientCreation {
 	private JTextField tfEmergencyContactPerson;
 	private JTextField tfRelationship;
 	private JTextField tfEmergencyPhoneNumber;
+	
+	String username=null;
 
 	/**
 	 * Launch the application.
 	 */
 	
-	public static void createAndShowGUI() {
+	public static void createAndShowGUI(String username) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					PatientCreation window = new PatientCreation();
+					PatientCreation window = new PatientCreation(username);
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -56,10 +58,10 @@ public class PatientCreation {
 	/**
 	 * Create the application.
 	 */
-	public PatientCreation() {
+	public PatientCreation(String username) {
 		initialize();
 		int rowCount;
-		
+		this.username=username;
 	}
 
 	/**
@@ -175,6 +177,7 @@ public class PatientCreation {
 		                    if(affectedRows==1)
 		                    {
 		                    	System.out.println("New patient record created.");
+		                    	PatientCreation.createAndShowGUI(username);
 		                    }
 		                    else
 		                    {
@@ -270,6 +273,16 @@ public class PatientCreation {
 		tfEmergencyPhoneNumber.setColumns(10);
 		tfEmergencyPhoneNumber.setBounds(385, 554, 157, 34);
 		panel.add(tfEmergencyPhoneNumber);
+		
+		JButton btnBack = new JButton("Back");
+		btnBack.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Menu.createAndShowGUI(username);
+				frame.dispose();
+			}
+		});
+		btnBack.setBounds(10, 48, 85, 21);
+		panel.add(btnBack);
 	}
 
 }

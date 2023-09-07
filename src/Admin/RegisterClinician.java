@@ -41,15 +41,17 @@ public class RegisterClinician {
 	private JTextField tfHospitalID;
 	private JTextField tfDepartment;
 	private JComboBox<Hospital> cbHospitalName;
+	
+	String adminID=null;
 
 	/**
 	 * Launch the application.
 	 */
-	public static void main(String[] args) {
+	public static void createAndShowGUI(String adminID) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					RegisterClinician window = new RegisterClinician();
+					RegisterClinician window = new RegisterClinician(adminID);
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -61,11 +63,12 @@ public class RegisterClinician {
 	/**
 	 * Create the application.
 	 */
-	public RegisterClinician() 
+	public RegisterClinician(String adminID) 
 	{
 		initialize();
 		String hospitalID = null;
 		String hospitalName = null;
+		this.adminID=adminID;
 		List<Hospital> hospitalList = new ArrayList<>();
 		
 		
@@ -302,5 +305,14 @@ public class RegisterClinician {
 		tfDepartment.setColumns(10);
 		tfDepartment.setBounds(303, 258, 157, 34);
 		panel.add(tfDepartment);
+		
+		JButton btnBack = new JButton("Back");
+		btnBack.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				MenuAdmin.createAndShowGUI(adminID);
+			}
+		});
+		btnBack.setBounds(25, 28, 85, 21);
+		panel.add(btnBack);
 	}
 }

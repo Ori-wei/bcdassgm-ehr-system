@@ -4,6 +4,11 @@ import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.security.InvalidKeyException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -15,11 +20,15 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
+import DigitalSignature.UserSignature;
+import Hashing.Hasher;
 import SymmetricEncryption.Decrypter;
+import asymmetric.AccessKey;
 
 public class ViewClinicalSummary3 {
 
@@ -45,6 +54,11 @@ public class ViewClinicalSummary3 {
 	String signature = null;
 	String doctorID = null;
 	
+	private Signature sig;
+	String clinicalSummaryRecord;
+	byte[] clnSignature;
+	PublicKey key;
+	
 	private JFrame frame;
 	private JTextField txtPatientIC;
 	private JTextField txtPatient;
@@ -55,6 +69,7 @@ public class ViewClinicalSummary3 {
 	private JTextField txtDesignation;
 	private JTextField txtDatetime;
 	private JTextField txtSignature;
+	private JButton btnValidate;
 	
 
 	/**
@@ -189,7 +204,7 @@ public class ViewClinicalSummary3 {
         });
         btnBack.setBounds(35, 26, 85, 21);
 		panel.add(btnBack);
-		
+				
 		// Prepared by
 		JLabel PreparedBy = new JLabel("Prepared By:");
 		PreparedBy.setFont(new Font("Tahoma", Font.PLAIN, 15));
@@ -250,6 +265,60 @@ public class ViewClinicalSummary3 {
         txtSignature.setBounds(190, 520, 143, 32);
         txtSignature.setEditable(false);
         panel.add(txtSignature);
+        
+        btnValidate = new JButton("Validate");
+        btnValidate.setBounds(190, 570, 85, 21);
+        btnValidate.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        btnValidate.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				actionValidatePerformed();
+			}
+		});
+        panel.add(btnValidate);
+	}
+	
+	public void actionValidatePerformed() {
+		
+		// step 1: Generate public key
+        PublicKey publicKey = null;
+        try {
+        	publicKey = AccessKey.getPublicKey("KeyManagement/" + doctorID + "/AsymmetricKeyPair/PublicKey");
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
+        if (publicKey != null) {
+        	// Step 2: Obtain clinical summary record
+        	clinicalSummaryRecord = CSID + "|" + patientIC + "|" + areaOfSpecialist + "|" + dateOfVisit +
+        			"|" + doctorID + "|" + history + "|" + physicalExamination + "|" + diagnosis + "|" +
+        			"|" + summary + treatment + "|" + followUpProgress + "|" + admissionID + "|" +
+        			"|" + dateTimeOfAdmission + "|"+ dateTimeOfDischarge + "|" + statusAtDischarge +
+        			"|" + timestamp + "|" + signature;
+        	
+        	// Step 3: Validate Signature
+    		boolean isValid = false;
+    		try {
+    			sig.initVerify(key);
+    		}catch(InvalidKeyException e) {
+    			e.printStackTrace();
+    		}
+    		try {
+    			sig.update(clinicalSummaryRecord.getBytes());
+    			isValid = sig.verify(signature.getBytes());
+    		} catch (SignatureException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		}
+    		
+    		// Step 4: Display result
+    		if(isValid) {
+    			JOptionPane.showMessageDialog(null, "The signature is valid.");
+    		}else {
+    			JOptionPane.showMessageDialog(null, "Warning: The signature is invalid\n"
+    					+ "This record consists of unathorized changes, "
+    					+ "please contact your IT staff to conduct a security check.", 
+    					"Warning", JOptionPane.WARNING_MESSAGE);
+    		}
+        }
 	}
 
 }

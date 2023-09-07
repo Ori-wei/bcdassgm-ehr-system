@@ -273,6 +273,16 @@ public class DisplayPatientEHR {
 	    JScrollPane scrollPane = new JScrollPane(jtable1);
 	    scrollPane.setBounds(51, 200, 547, 157); // Changed y-position for demonstration
 	    panel.add(scrollPane);
+	    
+	    JButton btnBack = new JButton("Back");
+	    btnBack.addActionListener(new ActionListener() {
+	    	public void actionPerformed(ActionEvent e) {
+	    		SearchPatientIC.createAndShowGUI(username);
+	    		frame.dispose();
+	    	}
+	    });
+	    btnBack.setBounds(21, 38, 85, 21);
+	    panel.add(btnBack);
 	    jtable1.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 	        public void valueChanged(ListSelectionEvent e) {
 	            if (!e.getValueIsAdjusting()) {
