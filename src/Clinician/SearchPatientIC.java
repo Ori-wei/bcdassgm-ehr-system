@@ -113,6 +113,11 @@ public class SearchPatientIC {
 		frame.getContentPane().add(btnSearch);
 		
 		JButton btnBack = new JButton("Back");
+		btnBack.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Menu.createAndShowGUI(username);
+			}
+		});
 		btnBack.setBounds(10, 22, 85, 21);
 		frame.getContentPane().add(btnBack);
 		frame.setBounds(100, 100, 507, 357);

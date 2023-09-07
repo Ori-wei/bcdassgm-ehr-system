@@ -10,6 +10,7 @@ import javax.swing.JTextField;
 
 import org.mindrot.jbcrypt.BCrypt;
 
+import Clinician.Menu;
 import DatabaseObject.Admin;
 
 import javax.swing.JButton;
@@ -140,6 +141,8 @@ public class LoginAdmin {
 		  		{
 		  			System.out.println("Valid");
 		  			System.out.println("Welcome admin: " + adminID);
+		  			Menu.createAndShowGUI(adminID);
+		  			frame.dispose();
 		  		}
 		  		else
 		  		{
