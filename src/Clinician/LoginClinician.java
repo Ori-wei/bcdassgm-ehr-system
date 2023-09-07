@@ -33,18 +33,18 @@ public class LoginClinician {
 	/**
 	 * Launch the application.
 	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					LoginClinician window = new LoginClinician();
-					window.frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
+	public static void createAndShowGUI() {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                try {
+                	LoginClinician window = new LoginClinician();
+                    window.frame.setVisible(true);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
 
 	/**
 	 * Create the application.
@@ -142,6 +142,8 @@ public class LoginClinician {
 		  		{
 		  			System.out.println("Valid");
 		  			System.out.println("Welcome Clinician: " + username);
+		  			Menu.createAndShowGUI(username);
+		  			frame.dispose();
 		  		}
 		  		else
 		  		{

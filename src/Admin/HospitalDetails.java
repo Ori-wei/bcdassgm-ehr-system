@@ -51,7 +51,7 @@ public class HospitalDetails {
 		int rowCount;
 		String hospitalID = null;
 		this.adminID=adminID;
-		try (Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+		try (Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
 	             Statement stmt = conn.createStatement();
 	             ResultSet rs = stmt.executeQuery("SELECT * from BCD.hospital")) {
 	        	
@@ -153,7 +153,7 @@ public class HospitalDetails {
 				String contactNumber = tfContactNumber.getText();
 				int affectedRows;
 				try {
-					Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+					Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
 					Statement stmt = conn.createStatement();
 					affectedRows = stmt.executeUpdate("INSERT INTO BCD.hospital (hospitalID, name, address, contact)  "
                     		+ "VALUES ('" + hospitalID + "','" + name + "','" + address + "','" + contactNumber + "')");
@@ -162,6 +162,7 @@ public class HospitalDetails {
                     {
                     	System.out.println("Hospital record " + hospitalID + " created.");
                     	HospitalDetails.createAndShowGUI(adminID);
+                    	frame.dispose();
                     }
                     else
                     {
@@ -192,6 +193,7 @@ public class HospitalDetails {
 		btnBack.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				MenuAdmin.createAndShowGUI(adminID);
+				frame.dispose();
 			}
 		});
 		btnBack.setBounds(28, 36, 85, 21);

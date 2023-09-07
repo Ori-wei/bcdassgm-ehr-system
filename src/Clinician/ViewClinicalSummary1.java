@@ -16,6 +16,8 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -65,6 +67,7 @@ public class ViewClinicalSummary1 {
 	String statusAtDischarge = null;
 	String timestamp = null;
 	String signature = null;
+	String selectedBlockchainRecord = null; 
 
 	
 	private JFrame frame;
@@ -83,11 +86,11 @@ public class ViewClinicalSummary1 {
 	/**
 	 * Launch the application.
 	 */
-	public static void createAndShowGUI(String username, String CSID, String timestampPassed) {
+	public static void createAndShowGUI(String username, String CSID, String timestampPassed, String patientID) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					ViewClinicalSummary1 window = new ViewClinicalSummary1("C0001", "CS0003", "2023-08-31 18:15:09.895");
+					ViewClinicalSummary1 window = new ViewClinicalSummary1(username, CSID, timestampPassed, patientID);
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -100,10 +103,10 @@ public class ViewClinicalSummary1 {
 	 * Create the application.
 	 * @throws ParseException 
 	 */
-	public ViewClinicalSummary1(String username, String CSID, String timestampPassed) throws ParseException {
+	public ViewClinicalSummary1(String username, String CSID, String timestampPassed, String patientID) throws ParseException {
 		initialize();
 		this.username=username;
-		this.patientID="BD/5lZqGUxOQcYEnbMrrMg==";
+		this.patientID=patientID;
 		this.CSID = CSID;
 		//from the PatientID (IC_No) gotten, retrieve name and sex from database
 		List<Patient> patientList = new ArrayList<>();
@@ -142,7 +145,10 @@ public class ViewClinicalSummary1 {
 	    LinkedList<Block> EHRchain = bc.readBlockchain(fileName);
 	    
 	    // Initialize DateTimeFormatter for timestamp comparison
-	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                .appendPattern("yyyy-MM-dd HH:mm:ss")
+                .appendFraction(ChronoField.MILLI_OF_SECOND, 1, 3, true) // 1 to 3 digits for milliseconds
+                .toFormatter();
         LocalDateTime targetTimestamp = LocalDateTime.parse(timestampPassed, formatter);
 
 	    // Loop through blocks and records
@@ -168,6 +174,7 @@ public class ViewClinicalSummary1 {
 	        	statusAtDischarge= components[14];
 	        	timestamp = components[15];
 	        	signature = components[16];
+	        	System.out.println(record);
 
 	            // Parse date for comparison
 	            //Date recordDate = sdf.parse(date);
@@ -179,6 +186,7 @@ public class ViewClinicalSummary1 {
 	            	ClinicalSummary clinicalSummary = new ClinicalSummary(id, areaOfSpecialist, dateOfVisit, doctorID, history, physicalExamination, 
 	            			diagnosis, summary, treatment, followUpProgress, admissionID, dateTimeOfAdmission, dateTimeOfDischarge, statusAtDischarge, timestamp, signature);
 	            	clinicalSummaryList.add(clinicalSummary);
+	            	selectedBlockchainRecord=record;
 	            }
 	        }
 	    }
@@ -346,7 +354,7 @@ public class ViewClinicalSummary1 {
 	}
 	
 	public void nextActionPerformed() {
-		ViewClinicalSummary2.createAndShowGUI(username, patientID, CSID, patientName, diagnosis, summary, treatment, followUpProgress, admissionID, dateTimeOfAdmission, dateTimeOfDischarge, statusAtDischarge, timestamp, signature, doctorID);
+		ViewClinicalSummary2.createAndShowGUI(username, patientID, CSID, patientName, diagnosis, summary, treatment, followUpProgress, admissionID, dateTimeOfAdmission, dateTimeOfDischarge, statusAtDischarge, timestamp, signature, doctorID, selectedBlockchainRecord);
 		frame.dispose();
 	}
 

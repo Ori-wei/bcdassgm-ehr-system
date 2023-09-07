@@ -60,7 +60,4 @@ public class RecordCollection implements Serializable, Iterable<String>{
 		// TODO Auto-generated method stub
 		return ehrList.iterator();
 	}
-
-	
-
 }

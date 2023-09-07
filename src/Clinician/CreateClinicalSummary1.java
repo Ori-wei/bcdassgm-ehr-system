@@ -89,7 +89,7 @@ public class CreateClinicalSummary1 {
 		// Generate CSID
         CSID = null;
 		int rowCount;
-        try (Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+        try (Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
 	             Statement stmt = conn.createStatement();
 	             ResultSet rs = stmt.executeQuery("SELECT * from BCD.clinicalSummary")) {
 	        	
@@ -126,7 +126,7 @@ public class CreateClinicalSummary1 {
         //Populate PatientID dropdown
         List<Patient> patientList = new ArrayList<>();
         try {
-	    	Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+	    	Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
 	        Statement stmt = conn.createStatement();
 	        ResultSet rs = stmt.executeQuery("SELECT * from BCD.patient");
             while (rs.next()) {
@@ -154,6 +154,8 @@ public class CreateClinicalSummary1 {
         Timestamp pytimestamp = new Timestamp(System.currentTimeMillis());
 		txtDTVisit.setText(pytimestamp.toString());
         
+		// Populate Doctor ID
+        txtDoc.setText(username);
 	}
 	
 	public CreateClinicalSummary1(String username, List<String> record) {
@@ -164,7 +166,7 @@ public class CreateClinicalSummary1 {
 		//Populate PatientID dropdown
         List<Patient> patientList = new ArrayList<>();
         try {
-	    	Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+	    	Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
 	        Statement stmt = conn.createStatement();
 	        ResultSet rs = stmt.executeQuery("SELECT * from BCD.patient");
             while (rs.next()) {
@@ -255,7 +257,7 @@ public class CreateClinicalSummary1 {
 		
 		txtPatient = new JTextField();
 		txtPatient.setBounds(235, 175, 143, 32);
-		txtPatient.setEnabled(false);
+		txtPatient.setEditable(false);
 		panel.add(txtPatient);
 		txtPatient.setColumns(10);
 		
@@ -266,7 +268,7 @@ public class CreateClinicalSummary1 {
 		
 		txtReportID = new JTextField();
 		txtReportID.setBounds(451, 175, 143, 32);
-		txtReportID.setEnabled(false);
+		txtReportID.setEditable(false);
 		panel.add(txtReportID);
 		txtReportID.setColumns(10);
         
@@ -289,7 +291,7 @@ public class CreateClinicalSummary1 {
         
         txtDTVisit = new JTextField();
         txtDTVisit.setBounds(237, 270, 143, 32);
-        txtDTVisit.setEnabled(false);
+        txtDTVisit.setEditable(false);
 		panel.add(txtDTVisit);
 		txtDTVisit.setColumns(10);
         
@@ -301,7 +303,6 @@ public class CreateClinicalSummary1 {
         txtDoc = new JTextField();
         txtDoc.setBounds(451, 270, 143, 32);
         txtDoc.setEditable(false);
-        txtDoc.setText(username);
 		panel.add(txtDoc);
 		txtDoc.setColumns(10);
 		

@@ -15,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.Base64;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -53,8 +54,9 @@ public class ViewClinicalSummary3 {
 	String timestamp = null;
 	String signature = null;
 	String doctorID = null;
+	String blockchainRecord=null;
 	
-	private Signature sig;
+	Signature sig;
 	String clinicalSummaryRecord;
 	byte[] clnSignature;
 	PublicKey key;
@@ -75,11 +77,11 @@ public class ViewClinicalSummary3 {
 	/**
 	 * Launch the application.
 	 */
-	public static void createAndShowGUI(String username, String patientID, String CSID, String patientName, String diagnosis, String summary, String treatment, String followUpProgress, String admissionID, String dateTimeOfAdmission, String dateTimeOfDischarge, String statusAtDischarge, String timestamp, String signature, String doctorID) {
+	public static void createAndShowGUI(String username, String patientID, String CSID, String patientName, String diagnosis, String summary, String treatment, String followUpProgress, String admissionID, String dateTimeOfAdmission, String dateTimeOfDischarge, String statusAtDischarge, String timestamp, String signature, String doctorID, String record) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					ViewClinicalSummary3 window = new ViewClinicalSummary3(username, patientID, CSID, patientName, diagnosis, summary, treatment, followUpProgress, admissionID, dateTimeOfAdmission, dateTimeOfDischarge, statusAtDischarge, timestamp, signature, doctorID);
+					ViewClinicalSummary3 window = new ViewClinicalSummary3(username, patientID, CSID, patientName, diagnosis, summary, treatment, followUpProgress, admissionID, dateTimeOfAdmission, dateTimeOfDischarge, statusAtDischarge, timestamp, signature, doctorID, record);
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -91,7 +93,7 @@ public class ViewClinicalSummary3 {
 	/**
 	 * Create the application.
 	 */
-	public ViewClinicalSummary3(String username, String patientID, String CSID, String patientName, String diagnosis, String summary, String treatment, String followUpProgress, String admissionID, String dateTimeOfAdmission, String dateTimeOfDischarge, String statusAtDischarge, String timestamp, String signature, String doctorID) {
+	public ViewClinicalSummary3(String username, String patientID, String CSID, String patientName, String diagnosis, String summary, String treatment, String followUpProgress, String admissionID, String dateTimeOfAdmission, String dateTimeOfDischarge, String statusAtDischarge, String timestamp, String signature, String doctorID, String record) {
 		initialize();
 		this.username=username;
 		this.patientIC=patientID;
@@ -111,6 +113,7 @@ public class ViewClinicalSummary3 {
 		String doctorName = null;
 		String department = null;
 		String designation = null;
+		this.blockchainRecord=record;
     	
         Decrypter decrypt = new Decrypter();
         decrpytedPatientIC = decrypt.decrypter(patientIC);
@@ -122,7 +125,7 @@ public class ViewClinicalSummary3 {
     	try {
     		Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
             Statement stmt = conn.createStatement();
-            ResultSet rs1 = stmt.executeQuery("SELECT * from BCD.clinician where clinicianID = '" + doctorID + "'");
+            ResultSet rs1 = stmt.executeQuery("SELECT * from BCD.clinician where username = '" + doctorID + "'");
             while(rs1.next())
             {
             	doctorName = rs1.getString("name");
@@ -198,7 +201,7 @@ public class ViewClinicalSummary3 {
 		btnBack = new JButton("Back");
         btnBack.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
-        		ViewClinicalSummary2.createAndShowGUI(username, patientIC, CSID, patientName, diagnosis, summary, treatment, followUpProgress, admissionID, dateTimeOfAdmission, dateTimeOfDischarge, statusAtDischarge, timestamp, signature, doctorID);
+        		ViewClinicalSummary2.createAndShowGUI(username, patientIC, CSID, patientName, diagnosis, summary, treatment, followUpProgress, admissionID, dateTimeOfAdmission, dateTimeOfDischarge, statusAtDischarge, timestamp, signature, doctorID, blockchainRecord);
         		frame.dispose();
         	}
         });
@@ -288,34 +291,30 @@ public class ViewClinicalSummary3 {
         }
         if (publicKey != null) {
         	// Step 2: Obtain clinical summary record
-        	clinicalSummaryRecord = CSID + "|" + patientIC + "|" + areaOfSpecialist + "|" + dateOfVisit +
-        			"|" + doctorID + "|" + history + "|" + physicalExamination + "|" + diagnosis + "|" +
-        			"|" + summary + treatment + "|" + followUpProgress + "|" + admissionID + "|" +
-        			"|" + dateTimeOfAdmission + "|"+ dateTimeOfDischarge + "|" + statusAtDischarge +
-        			"|" + timestamp + "|" + signature;
+        	// Split the string by the pipe character
+            String[] components = blockchainRecord.split("\\|");
+            
+            // Remove the last two elements
+            String[] newComponents = new String[components.length - 2];
+            System.arraycopy(components, 0, newComponents, 0, components.length - 2);
+            
+            // Join the elements back together
+            String clinicalSummaryRecord = String.join("|", newComponents);
         	
-        	// Step 3: Validate Signature
-    		boolean isValid = false;
-    		try {
-    			sig.initVerify(key);
-    		}catch(InvalidKeyException e) {
-    			e.printStackTrace();
-    		}
-    		try {
-    			sig.update(clinicalSummaryRecord.getBytes());
-    			isValid = sig.verify(signature.getBytes());
-    		} catch (SignatureException e) {
-    			// TODO Auto-generated catch block
-    			e.printStackTrace();
-    		}
+            // Step 3: Covert signature to bytes
+            byte[] decodedSignature = Base64.getDecoder().decode(signature);
+            
+        	// Step 4: Validate Signature
+    		UserSignature us = new UserSignature();
+    		boolean isValid = us.VerifySignature(clinicalSummaryRecord, decodedSignature, publicKey);
     		
-    		// Step 4: Display result
+    		// Step 5: Display result
     		if(isValid) {
     			JOptionPane.showMessageDialog(null, "The signature is valid.");
     		}else {
     			JOptionPane.showMessageDialog(null, "Warning: The signature is invalid\n"
     					+ "This record consists of unathorized changes, "
-    					+ "please contact your IT staff to conduct a security check.", 
+    					+ "please contact your IT department to conduct a security check.", 
     					"Warning", JOptionPane.WARNING_MESSAGE);
     		}
         }

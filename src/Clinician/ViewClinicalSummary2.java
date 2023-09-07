@@ -38,6 +38,7 @@ public class ViewClinicalSummary2 {
 	String statusAtDischarge = null;
 	String timestamp = null;
 	String signature = null;
+	String blockchainRecord = null;
 
 	
 	private JFrame frame;;
@@ -53,11 +54,11 @@ public class ViewClinicalSummary2 {
 	/**
 	 * Launch the application.
 	 */
-	public static void createAndShowGUI(String username, String patientID, String CSID, String patientName, String diagnosis, String summary, String treatment, String followUpProgress, String admissionID, String dateTimeOfAdmission, String dateTimeOfDischarge, String statusAtDischarge, String timestamp, String signature, String doctorID) {
+	public static void createAndShowGUI(String username, String patientID, String CSID, String patientName, String diagnosis, String summary, String treatment, String followUpProgress, String admissionID, String dateTimeOfAdmission, String dateTimeOfDischarge, String statusAtDischarge, String timestamp, String signature, String doctorID, String record) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					ViewClinicalSummary2 window = new ViewClinicalSummary2(username, patientID, CSID, patientName, diagnosis, summary, treatment, followUpProgress, admissionID, dateTimeOfAdmission, dateTimeOfDischarge, statusAtDischarge, timestamp, signature, doctorID);
+					ViewClinicalSummary2 window = new ViewClinicalSummary2(username, patientID, CSID, patientName, diagnosis, summary, treatment, followUpProgress, admissionID, dateTimeOfAdmission, dateTimeOfDischarge, statusAtDischarge, timestamp, signature, doctorID, record);
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -69,7 +70,7 @@ public class ViewClinicalSummary2 {
 	/**
 	 * Create the application.
 	 */
-	public ViewClinicalSummary2(String username, String patientID, String CSID, String patientName, String diagnosis, String summary, String treatment, String followUpProgress, String admissionID, String dateTimeOfAdmission, String dateTimeOfDischarge, String statusAtDischarge, String timestamp, String signature, String doctorID) {
+	public ViewClinicalSummary2(String username, String patientID, String CSID, String patientName, String diagnosis, String summary, String treatment, String followUpProgress, String admissionID, String dateTimeOfAdmission, String dateTimeOfDischarge, String statusAtDischarge, String timestamp, String signature, String doctorID, String record) {
 		initialize();
 		this.username=username;
 		this.patientIC=patientID;
@@ -86,6 +87,7 @@ public class ViewClinicalSummary2 {
 		this.timestamp=timestamp;
 		this.signature=signature;
 		this.doctorID=doctorID;
+		this.blockchainRecord=record;
     	
         Decrypter decrypt = new Decrypter();
         decrpytedPatientIC = decrypt.decrypter(patientIC);
@@ -116,7 +118,7 @@ public class ViewClinicalSummary2 {
         JButton btnBack = new JButton("Back");
         btnBack.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
-        		ViewClinicalSummary1.createAndShowGUI(username, CSID, timestamp);
+        		ViewClinicalSummary1.createAndShowGUI(username, CSID, timestamp, patientIC);
         		frame.dispose();
         	}
         });
@@ -219,7 +221,7 @@ public class ViewClinicalSummary2 {
 
 	public void nextActionPerformed() {
 
-		ViewClinicalSummary3.createAndShowGUI(username, patientIC, CSID, patientName, diagnosis, summary, treatment, followUpProgress, admissionID, dateTimeOfAdmission, dateTimeOfDischarge, statusAtDischarge, timestamp, signature, doctorID);
+		ViewClinicalSummary3.createAndShowGUI(username, patientIC, CSID, patientName, diagnosis, summary, treatment, followUpProgress, admissionID, dateTimeOfAdmission, dateTimeOfDischarge, statusAtDischarge, timestamp, signature, doctorID, blockchainRecord);
 		frame.dispose();
 	}
 

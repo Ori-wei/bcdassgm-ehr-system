@@ -73,7 +73,7 @@ public class RegisterClinician {
 		
 		
         try {
-	    	Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+	    	Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
 	        Statement stmt = conn.createStatement();
 	        ResultSet rs = stmt.executeQuery("SELECT * from BCD.hospital");
             while (rs.next()) {
@@ -159,7 +159,7 @@ public class RegisterClinician {
 				String department=tfDepartment.getText();
 				String hospitalID=tfHospitalID.getText();
 				//search from database if the record exist. If yes, abort. If no, proceed to generate username and password and insert record	
-		        try (Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+		        try (Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
 		             Statement stmt = conn.createStatement();
 		             ResultSet rs = stmt.executeQuery("SELECT * from BCD.clinician where clinicianID = '" + clinicianID + "'")) {
 		        	
@@ -310,6 +310,7 @@ public class RegisterClinician {
 		btnBack.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				MenuAdmin.createAndShowGUI(adminID);
+				frame.dispose();
 			}
 		});
 		btnBack.setBounds(25, 28, 85, 21);
