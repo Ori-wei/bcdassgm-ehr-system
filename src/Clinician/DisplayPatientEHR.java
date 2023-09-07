@@ -18,6 +18,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -138,11 +140,12 @@ public class DisplayPatientEHR {
 	            System.out.println("Comparing patientIC: " + patientIC + " with IC: " + IC);
 	            if (patientIC.equals(IC)) {
 	                ClinicalSummary existingSummary = latestClinicalSummaries.get(id);
-	                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+	                //DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+	                DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+	                        .appendPattern("yyyy-MM-dd HH:mm:ss")
+	                        .appendFraction(ChronoField.MILLI_OF_SECOND, 1, 3, true) // 1 to 3 digits for milliseconds
+	                        .toFormatter();
 	                LocalDateTime recordTimestamp = LocalDateTime.parse(timestamp, formatter);
-	                
-	                //SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-	                //Date recordDate = sdf.parse(date);
 
 	                // This part ensures that only the latest date for this CSID remains in the map
 	                if (existingSummary == null) {
@@ -258,7 +261,7 @@ public class DisplayPatientEHR {
 		panel.add(btnNext);
 		btnNext.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
-        		ViewClinicalSummary1.createAndShowGUI(username, CSID, datetime);
+        		ViewClinicalSummary1.createAndShowGUI(username, CSID, datetime, patientIC);
         		frame.dispose();
         	}
         });
@@ -268,6 +271,15 @@ public class DisplayPatientEHR {
 		btnCreateDischarge.setFont(new Font("Tahoma", Font.PLAIN, 15));
 		btnCreateDischarge.setBounds(51, 396, 157, 33);
 		panel.add(btnCreateDischarge);
+		btnCreateDischarge.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        		System.out.println("Selected CSID: " + CSID);
+                System.out.println("Selected patientIC: " + patientIC);
+                System.out.println("Selected username: " + username);
+        		CreateDischarge.createAndShowGUI(CSID, patientIC, username);
+        		frame.dispose();
+        	}
+        });
 		
 		jtable1 = new JTable();
 	    JScrollPane scrollPane = new JScrollPane(jtable1);

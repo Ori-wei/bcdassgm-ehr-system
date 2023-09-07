@@ -141,7 +141,7 @@ public class LoginAdmin {
 		  		{
 		  			System.out.println("Valid");
 		  			System.out.println("Welcome admin: " + adminID);
-		  			Menu.createAndShowGUI(adminID);
+		  			MenuAdmin.createAndShowGUI(adminID);
 		  			frame.dispose();
 		  		}
 		  		else

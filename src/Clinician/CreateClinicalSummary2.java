@@ -103,7 +103,7 @@ public class CreateClinicalSummary2 {
 		
 		txtPatientIC = new JTextField();
 		txtPatientIC.setBounds(35, 175, 143, 32);
-		txtPatientIC.setEnabled(false);
+		txtPatientIC.setEditable(false);
 		panel.add(txtPatientIC);
 		txtPatientIC.setColumns(10);
         
@@ -114,7 +114,7 @@ public class CreateClinicalSummary2 {
 		
 		txtPatient = new JTextField();
 		txtPatient.setBounds(235, 175, 143, 32);
-		txtPatient.setEnabled(false);
+		txtPatient.setEditable(false);
 		panel.add(txtPatient);
 		txtPatient.setColumns(10);
 		
@@ -125,7 +125,7 @@ public class CreateClinicalSummary2 {
 		
 		txtReportID = new JTextField();
 		txtReportID.setBounds(451, 175, 143, 32);
-		txtReportID.setEnabled(false);
+		txtReportID.setEditable(false);
 		panel.add(txtReportID);
 		txtReportID.setColumns(10);
 		

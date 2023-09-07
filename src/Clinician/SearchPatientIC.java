@@ -116,6 +116,7 @@ public class SearchPatientIC {
 		btnBack.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				Menu.createAndShowGUI(username);
+				frame.dispose();
 			}
 		});
 		btnBack.setBounds(10, 22, 85, 21);

@@ -78,7 +78,7 @@ public class Menu {
         JButton btnNewButton_2 = new JButton("Search to View EHR");
         btnNewButton_2.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
-        		DisplayPatientEHR.createAndShowGUI(username, "patientIC");
+        		SearchPatientIC.createAndShowGUI(username);
         		frame.dispose();
         	}
         });
@@ -97,9 +97,5 @@ public class Menu {
         btnNewButton_3.setBounds(238, 220, 132, 21);
         panel.add(btnNewButton_3);
         
-        JButton btnNewButton_1 = new JButton("Verify Record");
-        btnNewButton_1.setFont(new Font("Tahoma", Font.PLAIN, 15));
-        btnNewButton_1.setBounds(238, 361, 132, 21);
-        panel.add(btnNewButton_1);
 	}
 }

@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.security.PrivateKey;
 import java.sql.Timestamp;
+import java.util.Base64;
 import java.util.List;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -54,6 +55,7 @@ public class CreateClinicalSummary3 {
 	private String hashRecord = null;
 	private String hospitalID = null;
 	private String clinicianID = null;
+	private String signatureString = null;
 	private JButton btnBack;
 	private JRadioButton rdbtnYes;
 	private JRadioButton rdbtnNo;
@@ -123,7 +125,7 @@ public class CreateClinicalSummary3 {
 		
 		txtPatientIC = new JTextField();
 		txtPatientIC.setBounds(35, 175, 143, 32);
-		txtPatientIC.setEnabled(false);
+		txtPatientIC.setEditable(false);
 		panel.add(txtPatientIC);
 		txtPatientIC.setColumns(10);
         
@@ -134,7 +136,7 @@ public class CreateClinicalSummary3 {
 		
 		txtPatient = new JTextField();
 		txtPatient.setBounds(235, 175, 143, 32);
-		txtPatient.setEnabled(false);
+		txtPatient.setEditable(false);
 		panel.add(txtPatient);
 		txtPatient.setColumns(10);
 		
@@ -145,7 +147,7 @@ public class CreateClinicalSummary3 {
 		
 		txtReportID = new JTextField();
 		txtReportID.setBounds(451, 175, 143, 32);
-		txtReportID.setEnabled(false);
+		txtReportID.setEditable(false);
 		panel.add(txtReportID);
 		txtReportID.setColumns(10);
 		
@@ -186,7 +188,7 @@ public class CreateClinicalSummary3 {
             	int rowCount = 0;	
             	
         		try {
-            		Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+            		Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
                     Statement stmt = conn.createStatement();
             		// Generate AdmissionID
         	        ResultSet rs = stmt.executeQuery("SELECT * from BCD.Admission");
@@ -243,7 +245,7 @@ public class CreateClinicalSummary3 {
 
         txtName = new JTextField();
         txtName.setBounds(190, 346, 143, 32);
-        txtName.setEnabled(false);
+        txtName.setEditable(false);
         panel.add(txtName);
 
         // Designation
@@ -254,7 +256,7 @@ public class CreateClinicalSummary3 {
 
         txtDesignation = new JTextField();
         txtDesignation.setBounds(190, 390, 143, 32);
-        txtDesignation.setEnabled(false);
+        txtDesignation.setEditable(false);
         panel.add(txtDesignation);
 
         // Department
@@ -265,7 +267,7 @@ public class CreateClinicalSummary3 {
 
         txtDepartment = new JTextField();
         txtDepartment.setBounds(190, 432, 143, 32);
-        txtDepartment.setEnabled(false);
+        txtDepartment.setEditable(false);
         panel.add(txtDepartment);
 
         // Datetime of Preparation
@@ -276,7 +278,7 @@ public class CreateClinicalSummary3 {
 
         txtDatetime = new JTextField();
         txtDatetime.setBounds(190, 474, 143, 32);
-        txtDatetime.setEnabled(false);
+        txtDatetime.setEditable(false);
         panel.add(txtDatetime);
         
         // Signature
@@ -287,7 +289,7 @@ public class CreateClinicalSummary3 {
 
         txtSignature = new JTextField();
         txtSignature.setBounds(190, 520, 143, 32);
-        txtSignature.setEnabled(false);
+        txtSignature.setEditable(false);
         panel.add(txtSignature);
         
         btnSign = new JButton("Sign");
@@ -324,7 +326,7 @@ public class CreateClinicalSummary3 {
     	// Database part
     	// Step 1: assign variables with data
     	try {
-    		Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+    		Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
             Statement stmt = conn.createStatement();
             ResultSet rs1 = stmt.executeQuery("SELECT * from BCD.clinician where username = '" + username + "'");
             while(rs1.next())
@@ -358,10 +360,6 @@ public class CreateClinicalSummary3 {
 	    	}
 	        
 	        System.out.println(CSRecord);
-	        
-	        // hash the CSRecord
-	        String salt = BCrypt.gensalt();
-	        hashRecord = BCrypt.hashpw(CSRecord, salt);
     	}catch(SQLException e) {
     		e.printStackTrace();
     	}
@@ -376,8 +374,9 @@ public class CreateClinicalSummary3 {
         if (privateKey != null) {
         	// step 4: set digital signature
         	UserSignature userSignature = new UserSignature();
-        	signature = userSignature.getSignature(hashRecord, privateKey);
-        	txtSignature.setText(signature.toString());
+        	signature = userSignature.getSignature(CSRecord, privateKey);
+        	signatureString = Base64.getEncoder().encodeToString(signature);
+        	txtSignature.setText(signatureString);
         }
         
 		// step 5: control buttons
@@ -389,7 +388,7 @@ public class CreateClinicalSummary3 {
 		
 		// step 6: add timestamp and signature to CSRecord
 		Timestamp timestampNow = new Timestamp(System.currentTimeMillis());
-		finalCSRecord = CSRecord + "|" + timestampNow + "|" + signature.toString();
+		finalCSRecord = CSRecord + "|" + timestampNow + "|" + signatureString;
 		System.out.println(finalCSRecord);
 		
 		// step 7: add to blockchain
@@ -400,9 +399,6 @@ public class CreateClinicalSummary3 {
 		RecordCollection accumulatedRecords = RecordHandler.deserializeRecords();
 		accumulatedRecords.add(finalCSRecord);
 		System.out.println(accumulatedRecords);
-		
-		// if 4records are accumulated, access blockchain
-		System.out.println(accumulatedRecords.getEhrList().size());
 		
 		if (accumulatedRecords.getEhrList().size() == 4) {
 			
@@ -440,7 +436,7 @@ public class CreateClinicalSummary3 {
 		
 		// save record into db: ClinicalSummary, ReportPreparedBy, Admission
 		try {
-			Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+			Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
             Statement stmt = conn.createStatement();
             
 	        // ClinicalSummary

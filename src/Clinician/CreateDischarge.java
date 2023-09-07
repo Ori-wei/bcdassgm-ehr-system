@@ -87,9 +87,9 @@ public class CreateDischarge {
         
         // Populate Name
         try {
-	    	Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+	    	Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
 	        Statement stmt = conn.createStatement();
-	        ResultSet rs = stmt.executeQuery("SELECT * from BCD.patient");
+	        ResultSet rs = stmt.executeQuery("SELECT * from BCD.patient where IC_NO = '" + patientID + "'");
             while (rs.next()) {
             	Patient patient = new Patient(decryptedIC, rs.getString("name"));
             	txtPatient.setText(patient.getName());
@@ -272,7 +272,7 @@ public class CreateDischarge {
     	            	System.out.println("IC and ID matched! proceeding further..");
     	            	
     	            	// Step 2: Update Database
-    	        	    Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\ASUS\\MyDB;","root","toor");
+    	        	    Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
     	                Statement stmt = conn.createStatement();
     	                String query = "UPDATE BCD.Admission SET DATETIMEOFDISCHARGE = '" + dischargetimestamp + "',"
     	                		+ " STATUSATDISCHARGE = '" + statusAtDischarge + "' WHERE ADMISSIONID = '" + admissionID + "'";

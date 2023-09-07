@@ -1,9 +1,12 @@
 package DigitalSignature;
 
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.security.SignatureException;
+
 import Hashing.Hasher;
 
 public class UserSignature {
@@ -23,42 +26,46 @@ public class UserSignature {
 		
 		byte[] signature = null;
 		
+		// initialize signature
 		try {
 			sig.initSign(key);
-			
-			// convert hash to bytes
-			String recordHash = Hasher.sha256(clinicalSummaryRecord);
-			byte[] recordBytes = recordHash.getBytes();
-			
-			// sign
-			sig.update(recordBytes);
-			signature = sig.sign();
-			
-		}catch(Exception e) {
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		// sign
+		try {
+			sig.update(clinicalSummaryRecord.getBytes());
+			signature = sig.sign();
+		}catch(SignatureException e) {
+			e.printStackTrace();
+		}
+		
 		return signature;
 	}
 	
 	public boolean VerifySignature(String clinicalSummaryRecord, byte[] signature, PublicKey key) {
 		
-		boolean verification = false;
+		boolean isValid = false;
 		
+		// initialize
 		try {
 			sig.initVerify(key);
-			
-			// convert hash to bytes
-			String recordHash = Hasher.sha256(clinicalSummaryRecord);
-			byte[] recordBytes = recordHash.getBytes();
-			
-			// sign
-			sig.update(recordBytes);
-			signature = sig.sign();
-			
-		}catch(Exception e) {
+		}catch(InvalidKeyException e) {
 			e.printStackTrace();
 		}
-		return verification;
+		
+		// validate
+		try {
+			sig.update(clinicalSummaryRecord.getBytes());
+			isValid = sig.verify(signature);
+		} catch (SignatureException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return isValid;
 	}
 }
 
