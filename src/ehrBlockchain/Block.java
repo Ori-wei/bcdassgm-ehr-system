@@ -23,10 +23,11 @@ public class Block implements Serializable{
 		header.setTimestamp(new Timestamp(System.currentTimeMillis()).getTime());
 		header.setPreviousHash(previousHash);
 		String info = String.join("+", Integer.toString(header.getIndex()),
-				Long.toString(header.getTimestamp()), header.getPreviousHash());
+				Long.toString(header.getTimestamp()), header.getPreviousHash(), header.getMerkleRoot());
 		String blockHash = Hasher.sha256(info);
 		header.setCurrentHash(blockHash);
 		this.ehrContainer = new RecordCollection();
+		header.setMerkleRoot(getMerkleRoot());
 	}
 
 	public RecordCollection getEhrContainer() {
@@ -39,6 +40,15 @@ public class Block implements Serializable{
 
 	public Header getHeader() {
 		return header;
+	}
+	
+	public String getMerkleRoot() {
+		return ehrContainer.getMerkleRoot();
+	}
+	
+	public void updateMerkleRoot() {
+	    ehrContainer.calculateMerkleRoot(); // Make sure this is called
+	    header.setMerkleRoot(getMerkleRoot());
 	}
 
 	@Override

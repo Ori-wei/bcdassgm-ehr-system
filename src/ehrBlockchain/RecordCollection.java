@@ -11,6 +11,7 @@ public class RecordCollection implements Serializable, Iterable<String>{
 	private final int maxSize = 4;
 	public String merkleRoot = "";
 	public List<String> ehrList;
+	public Header header;
 	
 	public RecordCollection() {
 		ehrList = new ArrayList<>(size);
@@ -52,7 +53,7 @@ public class RecordCollection implements Serializable, Iterable<String>{
 
 	@Override
 	public String toString() {
-		return "RecordCollection [size=" + size + ", merkleRoot=" + merkleRoot + ", ehrList=" + ehrList	+ "]";
+		return "RecordCollection [size=" + size + ", ehrList=" + ehrList + "]";
 	}
 
 	@Override

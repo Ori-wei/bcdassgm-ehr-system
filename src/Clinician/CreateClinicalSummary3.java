@@ -417,6 +417,7 @@ public class CreateClinicalSummary3 {
 	        String previousHash = EHRchain.get().getLast().getHeader().getCurrentHash();
 	        Block b1 = new Block(previousHash);
 	        b1.setEhrContainer(accumulatedRecords); // Assuming setEhrContainer accepts RecordCollection
+	        b1.updateMerkleRoot(); // Update the Merkle root in the header
 	        System.out.println(b1);
 
 	        EHRchain.nextBlock(b1);
