@@ -354,7 +354,9 @@ public class ViewClinicalSummary1 {
 	}
 	
 	public void nextActionPerformed() {
-		ViewClinicalSummary2.createAndShowGUI(username, patientID, CSID, patientName, diagnosis, summary, treatment, followUpProgress, admissionID, dateTimeOfAdmission, dateTimeOfDischarge, statusAtDischarge, timestamp, signature, doctorID, selectedBlockchainRecord);
+		ViewClinicalSummary2.createAndShowGUI(username, patientID, CSID, patientName, diagnosis, summary, treatment, 
+				followUpProgress, admissionID, dateTimeOfAdmission, dateTimeOfDischarge, statusAtDischarge, timestamp, 
+				signature, doctorID, selectedBlockchainRecord);
 		frame.dispose();
 	}
 

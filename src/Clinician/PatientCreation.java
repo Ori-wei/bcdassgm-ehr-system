@@ -136,7 +136,7 @@ public class PatientCreation {
 				String emergencyContactPerson;
 				String relationship;
 				String emergencyPhoneNumber;
-				ICNo = tfICNo.getText();
+				
 				name = tfName.getText();
 				phoneNumber = tfPhoneNumber.getText();
 				email = tfEmail.getText();
@@ -146,6 +146,7 @@ public class PatientCreation {
 				emergencyContactPerson = tfEmergencyContactPerson.getText();
 				relationship = tfRelationship.getText();
 				emergencyPhoneNumber = tfEmergencyPhoneNumber.getText();
+				ICNo = tfICNo.getText();
 				//encrypt it!
 				Encrypter encypt = new Encrypter();
 				String encryptedICNo = encypt.encrypter(ICNo);
