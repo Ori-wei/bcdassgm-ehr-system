@@ -13,7 +13,7 @@ public class Block implements Serializable{
 	public Header header;
 	@SerializedName("EHRContainer")
 	public RecordCollection ehrContainer;
-	private static int count = -1;
+	private static int count = -1; 
 
     // ... other code ...
 	public Block(String previousHash) {

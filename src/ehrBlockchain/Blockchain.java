@@ -12,7 +12,7 @@ public class Blockchain implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private static LinkedList<Block> EHRchain = new LinkedList<>();
 	private static Blockchain _instance;
-	public String chainFile;
+	public String chainFile; 
 
 	public static Blockchain get_instance(String chainFile) {
 		if(_instance==null) {
