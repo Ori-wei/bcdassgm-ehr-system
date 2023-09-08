@@ -12,7 +12,7 @@ public class MerkleTree {
 	public String getRoot() {
 		return root;
 	}
-
+ 
 	public MerkleTree(List<String> ehrList) {
 		super();
 		this.ehrList = ehrList;

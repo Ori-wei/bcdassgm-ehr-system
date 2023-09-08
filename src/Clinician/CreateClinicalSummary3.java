@@ -487,7 +487,7 @@ public class CreateClinicalSummary3 {
 	        e2.printStackTrace();
 	    }
 		
-		// Back to Menu
+		// Back to Menu 
 		Menu.createAndShowGUI(username);
 	}
 }

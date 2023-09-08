@@ -9,7 +9,7 @@ public class RecordCollection implements Serializable, Iterable<String>{
 	private static final long serialVersionUID = 1L;
 	private int size = 0;
 	private final int maxSize = 4;
-	transient private String merkleRoot;
+	transient private String merkleRoot; 
 	public List<String> ehrList;
 	public Header header;
 	
