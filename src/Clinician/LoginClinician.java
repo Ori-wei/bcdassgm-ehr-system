@@ -8,9 +8,12 @@ import javax.swing.JLabel;
 import java.awt.Font;
 import javax.swing.JTextField;
 
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.mindrot.jbcrypt.BCrypt;
 
 import DatabaseObject.Clinician;
+import Hashing.SaltedHasher;
 
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
@@ -20,6 +23,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Scanner;
 import java.awt.event.ActionEvent;
@@ -135,9 +139,18 @@ public class LoginClinician {
 				
 		        //compare password	
 				System.out.println("salt is: " + salt);
-
+				
+				byte[] saltBytes = null;
+				saltBytes = Base64.getDecoder().decode(salt);
+				
+		        // Now you can use saltBytes in your hash function
+		        String saltedcmpPasswordHash = SaltedHasher.sha256(password, saltBytes);
+		  		System.out.println("Salted cmpPass hash is: " + saltedcmpPasswordHash);	
+		  		System.out.println("Salted password hash from database is: " + saltedHashPassword);
+		  		
 		  		//compare
-		  		boolean isValid = BCrypt.checkpw(password, saltedHashPassword);
+		  		boolean isValid = saltedcmpPasswordHash.equals(saltedHashPassword);
+		  		//boolean isValid = BCrypt.checkpw(password, saltedHashPassword);
 		  		if (isValid==true)
 		  		{
 		  			System.out.println("Valid");

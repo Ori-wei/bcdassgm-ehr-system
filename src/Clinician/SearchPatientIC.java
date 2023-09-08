@@ -62,9 +62,9 @@ public class SearchPatientIC {
 		lbSystem.setBounds(171, 10, 145, 33);
 		frame.getContentPane().add(lbSystem);
 		
-		JLabel lbTitle = new JLabel("Login Clinician");
+		JLabel lbTitle = new JLabel("Search Patient IC");
 		lbTitle.setFont(new Font("Tahoma", Font.PLAIN, 20));
-		lbTitle.setBounds(181, 53, 135, 33);
+		lbTitle.setBounds(159, 53, 165, 33);
 		frame.getContentPane().add(lbTitle);
 		
 		tfPatientIC = new JTextField();

@@ -24,6 +24,8 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import DatabaseObject.Admin;
 import DatabaseObject.Hospital;
+import Hashing.Salt;
+import Hashing.SaltedHasher;
 import Tools.RandomPasswordGenerator;
 import asymmetric.AsymmetricKeyPair;
 
@@ -158,6 +160,9 @@ public class RegisterClinician {
 				String designation=tfDesignation.getText();
 				String department=tfDepartment.getText();
 				String hospitalID=tfHospitalID.getText();
+				
+				byte[] salt_byte;
+				
 				//search from database if the record exist. If yes, abort. If no, proceed to generate username and password and insert record	
 		        try (Connection conn = DriverManager.getConnection("jdbc:derby:C:\\Users\\user\\MyDB;","root","toor");
 		             Statement stmt = conn.createStatement();
@@ -173,11 +178,14 @@ public class RegisterClinician {
 		        		System.out.println("Record not found. Proceed");
 		        		password = RandomPasswordGenerator.generateRandomPassword();
 		        		System.out.println("Password: " + password);
-		        		salt = BCrypt.gensalt();
-		        		System.out.println("Salt: " + salt);
-		        		hashedPassword = BCrypt.hashpw(password, salt);
-		                System.out.println("Hashed Password" + hashedPassword); 
-		                //sql to count row and add username C0001
+		        		
+		        		salt_byte = Salt.generate();
+		        		salt = Base64.getEncoder().encodeToString(salt_byte);
+		        		System.out.println("Salt is: " + salt);
+		        		
+		        		hashedPassword = SaltedHasher.sha256(password, salt_byte);
+		        		System.out.println("Hashed Password is: " + hashedPassword);	
+		        		
 		                try (Statement stmt2 = conn.createStatement();
 		                        ResultSet rs2 = stmt2.executeQuery("SELECT * from BCD.clinician ")) {
 		                   	
@@ -220,6 +228,7 @@ public class RegisterClinician {
 		                        System.out.println("Clinician ID inserted: " + clinicianID);
 		                        System.out.println("Username: " + username);
 		                        System.out.println("Password: " + password);
+		                        System.out.println("Salted Password hash: " + hashedPassword);
 		                                              
 								// create key pair
 		                        AsymmetricKeyPair asymmetricKeyPair = new AsymmetricKeyPair();
